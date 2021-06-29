@@ -1,0 +1,141 @@
+{% extends 'store/base.html' %}
+
+{% block title %}
+ - Consultar por producto
+{% endblock %}
+
+{% load static %}
+
+{% block contenido %}
+    <p class="font-weight-bold">Productos Tienda</p>
+
+    <table id="dtBasicExample" class="table table-striped table-bordered" cellspacing="0" width="100%">
+      <thead>
+        <tr>
+          <th class="th-sm">Nombre
+          </th>
+          <th class="th-sm">Descripción
+          </th>
+          <th class="th-sm">Precio
+          </th>
+          <th class="th-sm">Stock
+          </th>
+          <th class="th-sm">Codigo Producto
+          </th>
+          <th class="th-sm">SKU
+          </th>
+          <th class="th-sm">Categoria
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for producto in productos %}
+        <tr>
+            <td>{{ producto.nombre }}</th>
+            <td>{{ producto.descripcion }}</td>
+            <td>{{ producto.precio }}</td>
+            <td>{{ producto.stock }}</td>
+            <td>{{ producto.codigo_producto }}</td>
+            <td>{{ producto.sku }}</td>
+            <td>{{ producto.categoria }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      {% comment %} <tfoot>
+        <tr>
+          <th>Nombre
+          </th>
+          <th>Descripción
+          </th>
+          <th>Precio
+          </th>
+          <th>Stock
+          </th>
+          <th>Codigo Producto
+          </th>
+          <th>SKU
+          </th>
+          <th>Categoria
+          </th>
+        </tr>
+      </tfoot> {% endcomment %}
+    </table>
+    <br>
+    <hr>
+
+    <h1 class="h3 mb-3 font-weight-normal text-center">Buscar Producto en la Casa Central</h1>
+
+    {% load crispy_forms_tags %}
+    <form action="" method='post' class="form-signin">
+        {% csrf_token %}
+        <input type="text"  name="cod-prod" class="form-control" placeholder="Codigo de Producto">
+        <br>
+        <br>
+        <div class="row">
+            <div class="col-12 col-md-4 offset-md-4">
+                <input type="submit" value="Buscar"class="btn btn-lg btn-primary btn-block">
+            </div>
+        </div>
+    </form>
+
+    <br>
+    <br>
+    <br>
+    <br>
+    {% if productos_response %}
+        <p class="font-weight-bold">Productos Casa Comercial</p>
+
+        <table id="dtBasicExample" class="table table-striped table-bordered" cellspacing="0" width="100%">
+        <thead>
+            <tr>
+            <th class="th-sm">Nombre
+            </th>
+            <th class="th-sm">Descripción
+            </th>
+            <th class="th-sm">Precio
+            </th>
+            <th class="th-sm">Stock
+            </th>
+            <th class="th-sm">Codigo Producto
+            </th>
+            <th class="th-sm">SKU
+            </th>
+            <th class="th-sm">Categoria
+            </th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for producto_r in productos_response %}
+            <tr>
+                <td>{{ producto_r.nombre }}</th>
+                <td>{{ producto_r.descripcion }}</td>
+                <td>{{ producto_r.precio }}</td>
+                <td>{{ producto_r.stock }}</td>
+                <td>{{ producto_r.codigo_producto }}</td>
+                <td>{{ producto_r.sku }}</td>
+                <td>{{ producto_r.categoria.nombre_categoria }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+            <th>Nombre
+            </th>
+            <th>Descripción
+            </th>
+            <th>Precio
+            </th>
+            <th>Stock
+            </th>
+            <th>Codigo Producto
+            </th>
+            <th>SKU
+            </th>
+            <th>Categoria
+            </th>
+            </tr>
+        </tfoot>
+        </table>
+    {% endif %}
+
+{% endblock %}

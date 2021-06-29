@@ -1,0 +1,80 @@
+{% extends 'store/base.html' %}
+
+{% block title %}
+ - Consultar Ordenes de Pedido
+{% endblock %}
+
+{% load static %}
+
+{% block contenido %}
+    {% if tipo_usuario == 'Bodeguero' %}
+        <p class="font-weight-bold">Ordenes de pedido</p>
+
+        <table id="dtBasicExample" class="table table-striped table-bordered" cellspacing="0" width="100%">
+        <thead>
+            <tr>
+            <th class="th-sm">Cliente
+            </th>
+            <th class="th-sm">Fecha de Orden
+            </th>
+            <th class="th-sm">Retiro Tienda
+            </th>
+            <th class="th-sm">Opciones
+            </th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for orden in ordenes %}
+            <tr>
+                <td>{{ orden.cliente.nombre }}
+                <td>{{ orden.fecha_orden }}</td>
+                <td>{% if orden.retiro_tienda %}
+                Si 
+                {% else %}
+                No 
+                {% endif %}
+                </td>
+                <td>
+                <button onclick="abrir_modal_vista('{% url 'pedido_detalle' orden.id %}')" class="btn btn-success btn-sm">Ver</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+            <th>Cliente
+            </th>
+            <th>Fecha de Orden
+            </th>
+            <th>Retiro Tienda
+            </th>
+            <th>Opciones
+            </th>
+            </tr>
+        </tfoot>
+        </table>
+
+        <div class="modal fade" id="ver" role="dialog">
+
+        </div>
+
+        {% block js %}
+        <script type="text/javascript">
+            //var $ = JQuery.noConflict();
+            function abrir_modal_vista(url){
+                $('#ver').load(url, function() {
+                    $(this).modal('show');
+                });
+            }
+        </script>
+        {% endblock %}
+    {% elif tipo_usuario == 'Vendedor' %}
+        {% comment "" %}
+        Agregar formulario de registro de Orden de Pedido hacia el bodeguero
+        {% endcomment %}
+        {% load crispy_forms_tags %}
+        {% csrf_token %}
+        {{ form | crispy }}
+        {{ form_cliente | crispy }}
+    {% endif %}
+{% endblock %}

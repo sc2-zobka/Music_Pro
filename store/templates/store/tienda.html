@@ -1,0 +1,82 @@
+{% extends 'store/base.html' %} 
+{% load static %}
+
+{% block title %}
+ - Tienda
+{% endblock %}
+
+
+{% block contenido %}
+
+	<div class="row">
+		<hr>
+			<h2><span> ¡PRODUCTOS NUEVOS! </span></h2>
+		<hr>
+	</div>
+
+    <div class="row">
+		{% for producto in productos  %}
+			{% if producto.es_nuevo %}
+				<div class="col-lg-4">
+					{% if producto.imagen %}
+						<img class="thumbnail" src="{{ producto.imagen.url }}">
+					{% endif %}
+					<div class="box-element product">
+						<h6><strong>{{ producto.nombre }}</strong></h6>
+						<hr>
+
+						<button  class="btn btn-outline-secondary add-btn">Add to Cart</button>
+						{% comment %} <a class="btn btn-outline-success" href="#">View</a> {% endcomment %}
+						<button onclick="abrir_modal_vista('{% url 'detalle_producto' producto.id %}')" class="btn btn-outline-success">View</button>
+						<h4 style="display: inline-block; float: right">
+						<strong>$ {{ producto.precio }}</strong></h4>
+
+					</div>
+				</div>
+			{% endif %}	
+		{% endfor %}	
+	</div>
+
+	<div class="row">
+		<hr>
+			<h2 style="margin-top: 25px; " ><span> ¡PRODUCTOS EN OFERTA! </span></h2>
+		<hr>
+	</div>
+
+	<div class="row">
+		{% for producto in productos  %}
+			{% if producto.es_oferta %}
+				<div class="col-lg-4">
+						{% if producto.imagen %}
+							<img class="thumbnail" src="{{ producto.imagen.url }}">
+						{% endif %}
+					<div class="box-element product">
+						<h6><strong>{{ producto.nombre }}</strong></h6>
+						<hr>
+
+						<button  class="btn btn-outline-secondary add-btn">Add to Cart</button>
+						{% comment %} <a class="btn btn-outline-success" href="#">View</a> {% endcomment %}
+						<button onclick="abrir_modal_vista('{% url 'detalle_producto' producto.id %}')" class="btn btn-outline-success">View</button>
+						<h4 style="display: inline-block; float: right">
+						<strong>$ {{ producto.precio }}</strong></h4>
+
+					</div>
+				</div>
+			{% endif %}	
+		{% endfor %}
+	</div>
+
+	<div class="modal fade" id="ver" role="dialog">
+
+	</div>
+	{% block js %}
+        <script type="text/javascript">
+            //var $ = JQuery.noConflict();
+            function abrir_modal_vista(url){
+                $('#ver').load(url, function() {
+                    $(this).modal('show');
+                });
+            }
+        </script>
+	{% endblock %}
+{% endblock contenido %}

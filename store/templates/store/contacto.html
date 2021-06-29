@@ -1,0 +1,59 @@
+{% extends 'store/base.html' %} 
+
+{% load static %}
+
+{% block title %}
+ - Contacto
+{% endblock %}
+
+{% block js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+
+    {% if messages %}
+        <div>
+            {% for message in messages %}
+                <script>
+                    Swal.fire({
+                        "title": "Felicidades",
+                        "text": "{{message}}",
+                        "icon": "success"
+                    })
+                </script>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}
+
+
+
+
+{% block contenido %}
+
+<div class="masthead">
+    <div class="page-section portfolio">
+        <div class="container">
+            <h2 class="page-section-heading text-center text-uppercase text-secondary mb-0">Contáctanos</h2>
+            <!-- Icon Divider-->
+            <div class="divider-custom">
+                <div class="divider-custom-line"></div>
+                <div class="divider-custom-icon"><i class="fas fa-star"></i></div>
+                <div class="divider-custom-line"></div>
+            </div>
+            <div class="col-12 col-md-6 offset-md-3">
+                <div id="formulario">
+                    {% load crispy_forms_tags %}
+                    <form action="" method="post" >
+                        {% csrf_token %}
+                        {{ form | crispy }}
+
+                        <input class="btn btn-info" type="submit" value="Enviar" id="enviar">
+                    </form>
+                    <h5>{{ mensaje }}</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+{% endblock contenido %}

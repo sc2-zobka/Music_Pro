@@ -1,0 +1,108 @@
+{% extends 'store/base.html' %}
+
+{% block title %}
+ - Realizar Orden de Pedido
+{% endblock %}
+
+{% load static %}
+
+{% block js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+
+    {% if messages %}
+    <div>
+        {% for message in messages %}
+            <script>
+                Swal.fire({
+                    "title": "Feliciades",
+                    "text": "{{message}}",
+                    "icon": "success"
+                }).then( (ok) => {
+                    if (ok) {
+                        window.location.href = "{% url 'realizar_pedido' %}" 
+                        }
+                })
+            </script>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+<script>
+
+    {% comment %} const myForm = document.getElementById('form_pedido')
+    
+    myForm.addEventListener('submit', (e) => {
+        e.preventDefault()
+
+        const formData = new FormData(myForm)
+        const url = "http://localhost:8010/api/v1/ordenes-de-pedido/"
+        fetch(url , {
+            headers: {
+                //"Content-Type": "application/json",
+                //"Accept": "application/json",
+                Access-Control-Allow-Origin: "*"
+            },
+            method: 'POST',
+            body: formData
+        
+        })
+
+        }).catch((error)=>{
+            console.error(error)
+        })
+    }) {% endcomment %}
+
+</script>
+
+{% comment %} 
+<script>
+
+    //Ajax request
+    $( () => {
+    $('#form_pedido').submit(() => {
+        $.ajax({
+            type: 'POST',
+            url: 'http://localhost:8010/api/v1/ordenes-de-pedido/',
+            data: { 
+                producto: $(this).producto.value, 
+                tienda: $(this).tienda.value,
+                responsable: $(this).responsable.value,
+                cantidad: $(this).cantidad.value }
+        });
+        
+        
+        
+        console.log(data)
+        return false;
+    });
+    //window.location.href = " {% url 'tienda' %} "
+    console.log(data) 
+})
+</script> {% endcomment %}
+
+{% endblock %}
+
+
+
+{% block contenido %}
+
+<h3 class="d-flex justify-content-center">Relizar Orden de pedido</h3>
+<hr>
+
+    <div class="row masthead">
+    <div class="col-12 col-md-6 offset-md-3">
+        {% load crispy_forms_tags %}      
+        <form method='post' enctype="multipart/form-data" >
+            {% csrf_token %}
+            {{ form | crispy }}
+            <div class="d-flex justify-content-center">
+                <input class="btn btn-secondary btn-sm" type="reset" value="Limpiar">
+                &nbsp;
+                <input class="btn btn-primary btn-sm" type="submit" value="Realizar Pedido">
+            </div>
+            
+        </form>
+    </div>
+</div>
+
+{% endblock contenido %}
