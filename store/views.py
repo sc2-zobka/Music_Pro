@@ -5,9 +5,6 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import Group, User
-from django.http import Http404
-from django.http.request import HttpHeaders
-from django.http.response import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import (
@@ -28,7 +25,22 @@ def tienda(request):
 
 
 def carro(request):
-    data = {}
+
+    if request.user.is_authenticated:
+        cliente = request.user.cliente
+        # params of get_or_create() must be fields of the Orden model
+        orden, created = Orden.objects.get_or_create(cliente=cliente, es_aceptada=False)
+        items = orden.ordenitem_set.all()
+    else:
+        # Empty cart for non-logged users
+        items = []
+        orden = {"get_cart_total": 0, "get_cart_items": 0}
+
+    data = {
+        "items": items,
+        "orden": orden,
+    }
+
     return render(request, "store/carro.html", data)
 
 
@@ -150,11 +162,9 @@ def consultar_producto(request):
         url = str()
 
         if codigo_producto:
-            # url = 'http://localhost:8010/api/productos/?codigo_producto=112233'
             url = "http://localhost:8010/api/productos/?codigo_producto=" + str(codigo_producto)
         else:
             url = "http://localhost:8010/api/productos/"
-
         try:
             response = requests.get(url)
 

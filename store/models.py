@@ -25,7 +25,6 @@ class Categoria(MPTTModel):
         help_text=_("Campo requerido y único"),
         unique=True,
     )
-    # slug = models.SlugField(max_length=200, unique=True)
     parent = TreeForeignKey("self", on_delete=models.CASCADE, null=True, blank=True, related_name="children")
     is_active = models.BooleanField(default=True)
 
@@ -93,10 +92,7 @@ class Producto(models.Model):
         verbose_name=_("Producto nuevo"),
         default=False,
     )
-    stock = models.PositiveIntegerField(
-        # blank=False,
-        default=0,
-    )
+    stock = models.PositiveIntegerField(default=0)
     codigo_producto = models.CharField(verbose_name=("Codigo de producto"), help_text=("Requerido"), max_length=50)
     sku = models.CharField(verbose_name=("SKU"), help_text=("Requerido"), max_length=50)
     imagen = models.ImageField(upload_to="producto", null=True, blank=True)
@@ -133,6 +129,18 @@ class Orden(models.Model):
         verbose_name = _("Orden")
         verbose_name_plural = _("Ordenes")
 
+    @property
+    def get_cart_total(self):
+        orden_items = self.ordenitem_set.all()  # ordenitems???
+        total = sum([item.get_total for item in orden_items])
+        return total
+
+    @property
+    def get_cart_items(self):
+        orden_items = self.ordenitem_set.all()
+        total = sum([item.cantidad for item in orden_items])
+        return total
+
 
 class OrdenItem(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.SET_NULL, null=True)
@@ -141,8 +149,13 @@ class OrdenItem(models.Model):
     fecha_agregado = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = _("Orden Item")
-        verbose_name_plural = _("Orden Item")
+        verbose_name = "Orden Item"
+        verbose_name_plural = "Orden Item"
+
+    @property
+    def get_total(self):
+        total = self.producto.precio * self.cantidad
+        return total
 
 
 class OrdenDeDespacho(models.Model):
