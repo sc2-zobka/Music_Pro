@@ -45,7 +45,22 @@ def carro(request):
 
 
 def checkout(request):
-    data = {}
+
+    if request.user.is_authenticated:
+        cliente = request.user.cliente
+        # params of get_or_create() must be fields of the Orden model
+        orden, created = Orden.objects.get_or_create(cliente=cliente, es_aceptada=False)
+        items = orden.ordenitem_set.all()
+    else:
+        # Empty cart for non-logged users
+        items = []
+        orden = {"get_cart_total": 0, "get_cart_items": 0}
+
+    data = {
+        "items": items,
+        "orden": orden,
+    }
+
     return render(request, "store/checkout.html", data)
 
 
