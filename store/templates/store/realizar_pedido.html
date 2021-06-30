@@ -27,59 +27,6 @@
     </div>
     {% endif %}
 
-<script>
-
-    {% comment %} const myForm = document.getElementById('form_pedido')
-    
-    myForm.addEventListener('submit', (e) => {
-        e.preventDefault()
-
-        const formData = new FormData(myForm)
-        const url = "http://localhost:8010/api/v1/ordenes-de-pedido/"
-        fetch(url , {
-            headers: {
-                //"Content-Type": "application/json",
-                //"Accept": "application/json",
-                Access-Control-Allow-Origin: "*"
-            },
-            method: 'POST',
-            body: formData
-        
-        })
-
-        }).catch((error)=>{
-            console.error(error)
-        })
-    }) {% endcomment %}
-
-</script>
-
-{% comment %} 
-<script>
-
-    //Ajax request
-    $( () => {
-    $('#form_pedido').submit(() => {
-        $.ajax({
-            type: 'POST',
-            url: 'http://localhost:8010/api/v1/ordenes-de-pedido/',
-            data: { 
-                producto: $(this).producto.value, 
-                tienda: $(this).tienda.value,
-                responsable: $(this).responsable.value,
-                cantidad: $(this).cantidad.value }
-        });
-        
-        
-        
-        console.log(data)
-        return false;
-    });
-    //window.location.href = " {% url 'tienda' %} "
-    console.log(data) 
-})
-</script> {% endcomment %}
-
 {% endblock %}
 
 

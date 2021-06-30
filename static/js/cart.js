@@ -38,4 +38,22 @@ function updateUserOrder(productId, action) {
 		.then((data) => {
 		    location.reload()
 		})
+
+	// //Ajax request working but not changing Product quantity and cart icon item
+	// $.ajax({
+	// 	type: 'POST',
+	// 	url: '/update_item/',
+	// 	headers: {
+	// 		'Content-Type':'application/json',
+	// 		'X-CSRFToken': csrftoken,
+	// 	},
+	// 	data: JSON.stringify({'productId':productId, 'action':action})
+	// })
+	// .then((response) => {
+	// 	return response.json()
+	//  })
+	//  .then((data) => {
+	// 	 location.reload()
+	//  })
+
 }

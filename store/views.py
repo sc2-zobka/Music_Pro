@@ -21,8 +21,10 @@ def update_item(request):
     data = json.loads(request.body)
     productId = data["productId"]
     action = data["action"]
+    # # # # # # # # # # # # # # # # # # #
     print("Action", action)
     print("Product", productId)
+    # # # # # # # # # # # # # # # # # # #
 
     cliente = request.user.cliente
     producto = Producto.objects.get(id=productId)
@@ -78,7 +80,11 @@ def carro(request):
         orden = {"get_cart_total": 0, "get_cart_items": 0}
         cartItems = orden["get_cart_items"]
 
-    data = {"items": items, "orden": orden, "cartItems": cartItems}
+    data = {
+        "items": items,
+        "orden": orden,
+        "cartItems": cartItems,
+    }
 
     return render(request, "store/carro.html", data)
 
@@ -90,14 +96,17 @@ def checkout(request):
         # params of get_or_create() must be fields of the Orden model
         orden, created = Orden.objects.get_or_create(cliente=cliente, es_aceptada=False)
         items = orden.ordenitem_set.all()
+        cartItems = orden.get_cart_items
     else:
         # Empty cart for non-logged users
         items = []
         orden = {"get_cart_total": 0, "get_cart_items": 0}
+        cartItems = orden["get_cart_items"]
 
     data = {
         "items": items,
         "orden": orden,
+        "cartItems": cartItems,
     }
 
     return render(request, "store/checkout.html", data)
