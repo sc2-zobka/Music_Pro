@@ -22,38 +22,22 @@ for (i = 0; i < updateBtns.length; i++) {
 function updateUserOrder(productId, action) {
     console.log("User is authenticated, sending data...")
 
-    var url = '/update_item/'
-
-		fetch(url, {
-			method:'POST',
-			headers:{
-				'Content-Type':'application/json',
-                'X-CSRFToken': csrftoken,
-			}, 
-			body:JSON.stringify({'productId':productId, 'action':action})
-		})
-		.then((response) => {
-		   return response.json()
-		})
-		.then((data) => {
-		    location.reload()
-		})
-
-	// //Ajax request working but not changing Product quantity and cart icon item
-	// $.ajax({
-	// 	type: 'POST',
-	// 	url: '/update_item/',
-	// 	headers: {
-	// 		'Content-Type':'application/json',
-	// 		'X-CSRFToken': csrftoken,
-	// 	},
-	// 	data: JSON.stringify({'productId':productId, 'action':action})
-	// })
-	// .then((response) => {
-	// 	return response.json()
-	//  })
-	//  .then((data) => {
-	// 	 location.reload()
-	//  })
+	//Ajax request working but not changing 
+	//product quantity and cart icon item
+	$.ajax({
+		type: 'POST',
+		url: '/update_item/',
+		headers: {
+			'Content-Type':'application/json',
+			'X-CSRFToken': csrftoken,
+		},
+		data: JSON.stringify({'productId':productId, 'action':action})
+	})
+	.then((response) => {
+		return response.json()
+	 })
+	 .then((data) => {
+		 location.reload()
+	 })
 
 }
