@@ -25,7 +25,8 @@
 						<h6><strong>{{ producto.nombre }}</strong></h6>
 						<hr>
 
-						<button  class="btn btn-outline-secondary add-btn">Add to Cart</button>
+						<button data-product="{{producto.id}}" data-action="add" 
+						class="btn btn-outline-secondary add-btn update-cart">Add to Cart</button>
 						{% comment %} <a class="btn btn-outline-success" href="#">View</a> {% endcomment %}
 						<button onclick="abrir_modal_vista('{% url 'detalle_producto' producto.id %}')" class="btn btn-outline-success">View</button>
 						<h4 style="display: inline-block; float: right">
@@ -54,7 +55,8 @@
 						<h6><strong>{{ producto.nombre }}</strong></h6>
 						<hr>
 
-						<button  class="btn btn-outline-secondary add-btn">Add to Cart</button>
+						<button data-product="{{producto.id}}" data-action="add"  
+						class="btn btn-outline-secondary add-btn update-cart">Add to Cart</button>
 						{% comment %} <a class="btn btn-outline-success" href="#">View</a> {% endcomment %}
 						<button onclick="abrir_modal_vista('{% url 'detalle_producto' producto.id %}')" class="btn btn-outline-success">View</button>
 						<h4 style="display: inline-block; float: right">

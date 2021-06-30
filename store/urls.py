@@ -13,6 +13,7 @@ from .views import (
     realizar_pedido,
     registro,
     tienda,
+    update_item,
 )
 
 urlpatterns = [
@@ -21,6 +22,7 @@ urlpatterns = [
     path("checkout/", checkout, name="checkout"),
     path("contacto/", contacto, name="contacto"),
     path("registro/", registro, name="registro"),
+    path("update_item/", update_item, name="update_item"),
     path("modificar_cliente/<id>", modificar_cliente, name="modificar_cliente"),
     path("consultar_producto/", consultar_producto, name="consultar_producto"),
     path("ordenes_pedido/", ordenes_pedido, name="ordenes_pedido"),

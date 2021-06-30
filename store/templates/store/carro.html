@@ -41,7 +41,7 @@
 					<div class="cart-row">
 						<div style="flex:2"><img class="row-image" src=" {{ item.producto.imagen.url }} "></div>
 						<div style="flex:2"><p>{{ item.producto.nombre | capfirst }}</p></div>
-						<div style="flex:1"><p>$ {{ item.producto.precio | intcomma }}</p></div>
+						<div style="flex:1"><p>${{ item.producto.precio | intcomma }}</p></div>
 						<div style="flex:1">
 							<p class="quantity"> x{{ item.cantidad }} </p>
 							<div class="quantity">

@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import Group, User
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import (
@@ -16,30 +17,68 @@ from .forms import (
 from .models import *
 
 
+def update_item(request):
+    data = json.loads(request.body)
+    productId = data["productId"]
+    action = data["action"]
+    print("Action", action)
+    print("Product", productId)
+
+    cliente = request.user.cliente
+    producto = Producto.objects.get(id=productId)
+    orden, created = Orden.objects.get_or_create(cliente=cliente, es_completa=False)
+    ordenItem, created = OrdenItem.objects.get_or_create(orden=orden, producto=producto)
+
+    if action == "add":
+        ordenItem.cantidad += 1
+    elif action == "remove":
+        ordenItem.cantidad -= 1
+
+    ordenItem.save()
+
+    if ordenItem.cantidad <= 0:
+        ordenItem.delete()
+
+    return JsonResponse("Item was added", safe=False)
+
+
 def tienda(request):
-    productos = Producto.objects.all()
-    data = {
-        "productos": productos,
-    }
-    return render(request, "store/tienda.html", data)
-
-
-def carro(request):
 
     if request.user.is_authenticated:
         cliente = request.user.cliente
         # params of get_or_create() must be fields of the Orden model
         orden, created = Orden.objects.get_or_create(cliente=cliente, es_aceptada=False)
         items = orden.ordenitem_set.all()
+        cartItems = orden.get_cart_items
     else:
         # Empty cart for non-logged users
         items = []
         orden = {"get_cart_total": 0, "get_cart_items": 0}
+        cartItems = orden["get_cart_items"]
 
+    productos = Producto.objects.all()
     data = {
-        "items": items,
-        "orden": orden,
+        "productos": productos,
+        "cartItems": cartItems,
     }
+    return render(request, "store/tienda.html", data)
+
+
+def carro(request):
+    # cart for logged in users
+    if request.user.is_authenticated:
+        cliente = request.user.cliente
+        # params of get_or_create() must be fields of the Orden model
+        orden, created = Orden.objects.get_or_create(cliente=cliente, es_aceptada=False)
+        items = orden.ordenitem_set.all()
+        cartItems = orden.get_cart_items
+    else:
+        # cart for non-logged users
+        items = []
+        orden = {"get_cart_total": 0, "get_cart_items": 0}
+        cartItems = orden["get_cart_items"]
+
+    data = {"items": items, "orden": orden, "cartItems": cartItems}
 
     return render(request, "store/carro.html", data)
 
