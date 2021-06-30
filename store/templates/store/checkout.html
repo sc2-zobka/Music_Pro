@@ -20,10 +20,20 @@
 						</div>
 					</div>
 					
-					<div id="shipping-info">
+					
 						<hr>
-						<p>Shipping Information:</p>
+						<div class="d-flex justify-content-around">	
+							<div>
+								<p class="font-weight-bold">Información de despacho</p>
+							</div>
+							<div>
+								<input type="checkbox" class="form-check-input" id="despacho">
+								<label class="form-check-label" for="exampleCheck1">¿Pedido para despacho?</label>
+							</div>
+						</div>
 						<hr>
+
+					<div id="shipping-info" style="display: none">
 						<div class="form-field">
 							<input class="form-control" type="text" name="Direccion" placeholder="Direccion..">
 						</div>
@@ -72,5 +82,22 @@
 			</div>
 		</div>
 	</div>
+
+	<script >
+	 
+		const chkBox = document.getElementById('despacho')
+		const shippingForm = document.getElementById('shipping-info')
+
+		chkBox.addEventListener('change', (e) => {
+			if (chkBox.checked) {
+				shippingForm.style.display = "inline"
+			}
+			else {
+				shippingForm.style.display = "none"
+			}
+		})
+	</script>
+
+
 
 {% endblock contenido %}
