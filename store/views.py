@@ -308,3 +308,10 @@ def detalle_producto(request, id):
     data["producto"] = producto
 
     return render(request, "store/detalle_producto.html", data)
+
+
+def procesar_orden(request):
+
+    print("Data: ", request.body)
+
+    return JsonResponse("Pago realizado..", safe=False)

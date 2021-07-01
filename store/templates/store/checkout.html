@@ -98,6 +98,7 @@
 		</div>
 	</div>
 
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 	<script >
 		//
 	 	//Shipping or Takeaway 
@@ -182,6 +183,32 @@
 
 	    	console.log('Shipping Info:', shippingInfo)
 	    	console.log('User Info:', userFormData)
+
+			//Sent data to backend
+			var url = "/procesar_orden/"
+	    	fetch(url, {
+	    		method:'POST',
+	    		headers:{
+	    			'Content-Type':'applicaiton/json',
+	    			'X-CSRFToken':csrftoken,
+	    		}, 
+	    		body:JSON.stringify({'form':userFormData, 'shipping':shippingInfo}),
+	    		
+	    	})
+	    	.then((response) => response.json())
+
+			
+			Swal.fire({
+				"title": "Gracias!",
+				"text": "Compra Exitosa!",
+				"icon": "success",
+				"confirmButtonText": "Inicio"        
+			}).then(okay => {
+				if (okay) {
+				window.location.href = "{% url 'tienda' %}";
+					}
+				});
+        
 
 
 		}
