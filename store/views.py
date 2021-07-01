@@ -103,10 +103,13 @@ def checkout(request):
         orden = {"get_cart_total": 0, "get_cart_items": 0}
         cartItems = orden["get_cart_items"]
 
+    tiendas = Tienda.objects.all()
+
     data = {
         "items": items,
         "orden": orden,
         "cartItems": cartItems,
+        "tiendas": tiendas,
     }
 
     return render(request, "store/checkout.html", data)
