@@ -1,3 +1,4 @@
+import datetime
 import json
 
 import requests
@@ -312,6 +313,40 @@ def detalle_producto(request, id):
 
 def procesar_orden(request):
 
-    print("Data: ", request.body)
+    transaction_id = datetime.datetime.now().timestamp()
+    data = json.loads(request.body)
+
+    if request.user.is_authenticated:
+
+        cliente = request.user.cliente
+        orden, created = Orden.objects.get_or_create(cliente=cliente, es_completa=False)
+        total = int(data["form"]["total"])
+
+        despacho = data["shipping"]["despacho"]
+
+        if despacho is None:
+            orden.retiro_en_tienda = True
+
+        orden.transaction_id = transaction_id
+
+        # check if total sent by frontend is equal to total in backend
+        if total == int(orden.get_cart_total):
+            orden.es_completa = True
+        orden.save()
+
+        if orden.es_completa == True and orden.retiro_en_tienda == False:
+            # create Orden de Despacho instance
+            OrdenDeDespacho.objects.create(
+                cliente=cliente,
+                orden=orden,
+                direccion=data["shipping"]["direccion"],
+                ciudad=data["shipping"]["ciudad"],
+                comuna=data["shipping"]["comuna"],
+                region=data["shipping"]["region"],
+                zipcode=data["shipping"]["zipcode"],
+            )
+
+    else:
+        print("User is not logged in")
 
     return JsonResponse("Pago realizado..", safe=False)

@@ -116,7 +116,7 @@
 		} 
 
 		
-		const total = '{{orden.get_cart_total | intcomma}}'
+		var total = '{{orden.get_cart_total}}'
 
 		chkBox.addEventListener('change', (e) => {
 			if (chkBox.checked) {
@@ -155,7 +155,8 @@
 			var userFormData = {
 				'nombre' : null,
 				'email' : null,
-				'tienda' : selectedTienda(),
+				'tienda' : null,
+				'despacho' : null,
 				'total' : total
 			}
 
@@ -164,7 +165,8 @@
 				'ciudad' : null,
 				'comuna' : null,
 				'region' : null,
-				'zipcode' : null
+				'zipcode' : null,
+				'despacho' : null
 			}
 
 			// check if shipping needed
@@ -174,11 +176,19 @@
 		    	shippingInfo.comuna = form.comuna.value
 				shippingInfo.region = form.region.value
 		    	shippingInfo.zipcode = form.zipcode.value
+				shippingInfo.despacho = true
+				console.log("Listo para despacho...")
+				
+			} else if (!chkBox.checked ) {
+				userFormData.tienda = selectedTienda()
+				userFormData.despacho = false
+				console.log("Retiro en Tienda: " + userFormData.tienda)
 			}
 			
 			if (user == 'AnonymousUser'){
 	    		userFormData.nombre = form.nombre.value
 	    		userFormData.email = form.email.value
+				userFormData.tienda = selectedTienda()
 	    	}
 
 	    	console.log('Shipping Info:', shippingInfo)
