@@ -5,6 +5,9 @@
  - Tienda
 {% endblock %}
 
+{% load humanize %}
+
+{% load multiplicar %}
 
 {% block contenido %}
 
@@ -29,9 +32,8 @@
 						class="btn btn-outline-secondary add-btn update-cart">Add to Cart</button>
 						{% comment %} <a class="btn btn-outline-success" href="#">View</a> {% endcomment %}
 						<button onclick="abrir_modal_vista('{% url 'detalle_producto' producto.id %}')" class="btn btn-outline-success">View</button>
-						<h4 style="display: inline-block; float: right">
-						<strong>$ {{ producto.precio }}</strong></h4>
-
+						<h5 style="display: inline-block; float: right">
+						<strong>$ {{ producto.precio|multiplicar:valor_cambio|intcomma }} {{ request.session.CURRENCY_CODE }}</strong></h5>
 					</div>
 				</div>
 			{% endif %}	
@@ -59,8 +61,8 @@
 						class="btn btn-outline-secondary add-btn update-cart">Add to Cart</button>
 						{% comment %} <a class="btn btn-outline-success" href="#">View</a> {% endcomment %}
 						<button onclick="abrir_modal_vista('{% url 'detalle_producto' producto.id %}')" class="btn btn-outline-success">View</button>
-						<h4 style="display: inline-block; float: right">
-						<strong>$ {{ producto.precio }}</strong></h4>
+						<h5 style="display: inline-block; float: right">
+						<strong>$ {{ producto.precio|multiplicar:valor_cambio|intcomma }} {{ request.session.CURRENCY_CODE }}</strong></h5>
 
 					</div>
 				</div>

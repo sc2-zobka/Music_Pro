@@ -2,14 +2,20 @@ import json
 
 import requests
 from django.contrib import messages
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from django.contrib.auth.models import Group, User
+from django.core import serializers
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
+# PRUEBA
+from transbank.webpay.webpay_plus import transaction
+
 from .forms import (
     ContactoForms,
+    CustomCambioContrasenaForm,
     CustomUserCreationForm,
     ModificarClienteForms,
     PedidoCasaCentralForms,
@@ -44,14 +50,57 @@ def update_item(request):
     return JsonResponse("Item was added", safe=False)
 
 
+def seleccionar_moneda(request, codigo):
+    request.session["CURRENCY_CODE"] = codigo
+    print(request.session["CURRENCY_CODE"])
+
+    # del request.session["AMT_CONVERSION"]
+
+    if not "AMT_CONVERSION" in request.session:
+        respuesta = requests.get(
+            "https://api.exchangeratesapi.io/v1/latest?access_key=6c8a76e635e052fad1fd4be70b390b0b&base=CLP"
+        )
+        datos = respuesta.json()
+        valores_cambios = datos["rates"]
+
+        request.session["AMT_CONVERSION"] = valores_cambios
+
+        denominaciones = {}
+
+        for moneda in request.session["CURRENCY_CODES"]:
+            for valor_cambio in request.session["AMT_CONVERSION"]:
+                if moneda["fields"]["codigo_moneda"] == valor_cambio:
+                    denominaciones[valor_cambio] = float(
+                        request.session["AMT_CONVERSION"][moneda["fields"]["codigo_moneda"]]
+                    )
+                    break
+
+        request.session["AMT_CONVERSION"] = denominaciones
+
+    print(request.session["AMT_CONVERSION"])
+
+    return redirect("tienda")
+
+
 def tienda(request):
+    cartItems = 0
+    valor_cambio = 1
+
+    if not "CURRENCY_CODE" in request.session:
+        request.session["CURRENCY_CODE"] = "CLP"
+
+    print(request.session["CURRENCY_CODE"])
 
     if request.user.is_authenticated:
-        cliente = request.user.cliente
-        # params of get_or_create() must be fields of the Orden model
-        orden, created = Orden.objects.get_or_create(cliente=cliente, es_aceptada=False)
-        items = orden.ordenitem_set.all()
-        cartItems = orden.get_cart_items
+        try:
+            if not request.user.is_staff:
+                cliente = request.user.cliente
+                # params of get_or_create() must be fields of the Orden model
+                orden, created = Orden.objects.get_or_create(cliente=cliente, es_aceptada=False)
+                items = orden.ordenitem_set.all()
+                cartItems = orden.get_cart_items
+        except Exception as e:
+            print(e)
     else:
         # Empty cart for non-logged users
         items = []
@@ -59,10 +108,26 @@ def tienda(request):
         cartItems = orden["get_cart_items"]
 
     productos = Producto.objects.all()
+    monedas = None
+
+    if not "CURRENCY_CODES" in request.session:
+        monedas = Moneda.objects.all()
+
+        tmp_json = serializers.serialize("json", monedas)
+
+        request.session["CURRENCY_CODES"] = json.loads(tmp_json)
+        print(request.session["CURRENCY_CODES"])
+
+    if "AMT_CONVERSION" in request.session:
+        valor_cambio = float(request.session["AMT_CONVERSION"][request.session["CURRENCY_CODE"]])
+
     data = {
         "productos": productos,
         "cartItems": cartItems,
+        "monedas": monedas,
+        "valor_cambio": valor_cambio,
     }
+
     return render(request, "store/tienda.html", data)
 
 
@@ -90,7 +155,6 @@ def carro(request):
 
 
 def checkout(request):
-
     if request.user.is_authenticated:
         cliente = request.user.cliente
         # params of get_or_create() must be fields of the Orden model
@@ -153,6 +217,61 @@ def realizar_pedido(request):
     return render(request, "store/realizar_pedido.html", data)
 
 
+def loguear(request):
+    data = {"form": AuthenticationForm()}
+
+    if request.method == "POST":
+        # here you get the post request username and password
+        username = request.POST.get("username", "")
+        password = request.POST.get("password", "")
+
+        # authentication of the user, to check if it's active or None
+        user = authenticate(username=username, password=password)
+
+        if user is not None:
+            if user.is_active:
+                if not user.is_staff:
+                    # this is where the user login actually happens, before this the user
+                    # is not logged in.
+                    login(request, user)
+
+                    return redirect("tienda")
+                else:
+                    if user.last_login is None:
+                        login(request, user)
+                        messages.warning(request, "Como primer inicio se debe cambiar la contraseña")
+                        return redirect("change_password")
+                    else:
+                        login(request, user)
+                        return redirect("tienda")
+            else:
+                messages.error(request, "Usuario no disponible")
+                return redirect("login")
+        else:
+            messages.error(request, "Usuario no disponible")
+            return redirect("login")
+
+    return render(request, "registration/login.html", data)
+
+
+@login_required
+def cambiar_contrasena(request):
+    data = {"form": CustomCambioContrasenaForm(request.user)}
+
+    if request.method == "POST":
+        form = CustomCambioContrasenaForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)  # Important!
+            messages.success(request, "Tu contraseña ha sido cambiada correctamente!")
+            return redirect("change_password")
+        else:
+            messages.error(request, "La contraseña no se ha modificado.")
+            return redirect("change_password")
+
+    return render(request, "registration/cambiar_contrasena.html", data)
+
+
 def registro(request):
     data = {"form": CustomUserCreationForm()}
 
@@ -189,7 +308,7 @@ def registro(request):
 @login_required
 @permission_required({"store.change_cliente", "store.view_cliente"})
 def modificar_cliente(request, id):
-    if not request.user.is_staff:
+    if not request.user.is_staff and request.user.groups.filter(name="Cliente").exists():
         cliente = get_object_or_404(Cliente, cliente_id=id)
         usuario = get_object_or_404(User, id=id)
 
@@ -212,7 +331,7 @@ def modificar_cliente(request, id):
 
         return render(request, "registration/modificar_cliente.html", data)
     else:
-        return redirect("/")
+        return redirect("/admin")
 
 
 @login_required
@@ -305,3 +424,23 @@ def detalle_producto(request, id):
     data["producto"] = producto
 
     return render(request, "store/detalle_producto.html", data)
+
+
+def webpay(request):
+    monto = 2000
+    orden_compra = 123456789
+    sesion_id = "sessionId"
+
+    url_regreso = "http://localhost:8000"
+    url_final = "http://localhost:8000"
+
+    response = transaction.Transaction.create(orden_compra, sesion_id, monto, url_regreso)
+
+    token_ws = response.token
+    token_accion = response.url
+
+    data = {
+        "monto": monto,
+        "orden_compra": orden_compra,
+        "token_ws": token_ws,
+    }

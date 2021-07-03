@@ -207,3 +207,11 @@ class PedidoCasaCentral(models.Model):
 
     def __str__(self):
         return str(self.id)
+
+
+class Moneda(models.Model):
+    codigo_moneda = models.CharField(max_length=3)
+    descripcion = models.CharField(max_length=50, default="")
+
+    def __str__(self):
+        return str(self.codigo_moneda)

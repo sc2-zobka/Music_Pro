@@ -2,16 +2,19 @@ from django.urls import path
 
 from .views import (
     aceptar_pedido,
+    cambiar_contrasena,
     carro,
     checkout,
     consultar_producto,
     contacto,
     detalle_producto,
+    loguear,
     modificar_cliente,
     ordenes_pedido,
     pedido_detalle,
     realizar_pedido,
     registro,
+    seleccionar_moneda,
     tienda,
     update_item,
 )
@@ -30,4 +33,7 @@ urlpatterns = [
     path("pedido_detalle/<id>", pedido_detalle, name="pedido_detalle"),
     path("aceptar_pedido/<id>", aceptar_pedido, name="aceptar_pedido"),
     path("detalle_producto/<id>", detalle_producto, name="detalle_producto"),
+    path("accounts/login/", loguear, name="login"),
+    path("accounts/change_password/", cambiar_contrasena, name="change_password"),
+    path("seleccionar_moneda/<str:codigo>/", seleccionar_moneda, name="seleccionar_moneda"),
 ]

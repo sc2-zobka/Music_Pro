@@ -36,6 +36,7 @@
         }
         var csrftoken = getToken('csrftoken')
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
 
 
   </head>
@@ -84,6 +85,29 @@
             <a class="nav-link" href="{% url 'ordenes_pedido' %}">Ordenes de Pedido<span class="sr-only"></span></a>
           </li>
           {% endif %}
+          {{ request.session.CURRENCY_CODES.model }}
+          <div class="form-group">
+            <select id="cod-moneda" class="selectpicker form-control">
+              <option selected>Seleccionar moneda</option>
+              {% if monedas is not None %}
+                {% for moneda in monedas %}
+                  {% if moneda.codigo_moneda == request.session.CURRENCY_CODE %}
+                    <option id="{{ moneda.codigo_moneda }}" selected>{{ moneda.codigo_moneda }} - {{ moneda.descripcion }}</option>
+                  {% else %}
+                    <option id="{{ moneda.codigo_moneda }}">{{ moneda.codigo_moneda }} - {{ moneda.descripcion }}</option>
+                  {% endif %}
+                {% endfor %}
+              {% else %}
+                {% for moneda in request.session.CURRENCY_CODES %}
+                  {% if moneda.fields.codigo_moneda == request.session.CURRENCY_CODE %}
+                    <option id="{{ moneda.fields.codigo_moneda }}" selected>{{ moneda.fields.codigo_moneda }} - {{ moneda.fields.descripcion }}</option>
+                  {% else %}
+                    <option id="{{ moneda.fields.codigo_moneda }}">{{ moneda.fields.codigo_moneda }} - {{ moneda.fields.descripcion }}</option>
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            </select>
+          </div>
         </ul>
 
         <div class="form-inline my-2 my-lg-0">
@@ -101,7 +125,7 @@
           <a href="{% url 'carro' %}">
             <img  id="cart-icon" src="{% static 'images/cart.png' %}">
           </a>
-          <p id="cart-total">{{ cartItems }}</p>
+          <p id="cart-total">{% if cartItems is not None %}{{ cartItems }}{% else %}0{% endif %}</p>
         </div>
 
       </div>
@@ -123,5 +147,15 @@
     {% comment %} <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script> {% endcomment %}
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+  
+    <script>
+      $(document).on('change', '#cod-moneda', function () {
+        matl_sel = $(this).find("option:selected").attr("id");
+        
+        if ( matl_sel != null ) {
+          window.location.href = "/seleccionar_moneda/" +  matl_sel + "/";
+        }
+      })
+    </script>
   </body>
 </html>

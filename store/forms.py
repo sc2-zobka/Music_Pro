@@ -1,7 +1,8 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import PasswordChangeForm, UserCreationForm
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.forms import widgets
 
 from .models import Cliente, Contacto, PedidoCasaCentral, User
 
@@ -74,6 +75,14 @@ class CustomUserCreationForm(UserCreationForm):
     class Meta:
         model = User
         fields = ["nombre", "email", "username", "password1", "password2"]
+
+
+class CustomCambioContrasenaForm(PasswordChangeForm):
+    def __init__(self, *args, **kwargs):
+        super(CustomCambioContrasenaForm, self).__init__(*args, **kwargs)
+        self.fields["old_password"].label = "Contraseña anterior"
+        self.fields["new_password1"].label = "Nueva contraseña"
+        self.fields["new_password2"].label = "Confirmar contraseña"
 
 
 class ModificarClienteForms(forms.ModelForm):
