@@ -73,10 +73,45 @@ def carro(request):
         items = orden.ordenitem_set.all()
         cartItems = orden.get_cart_items
     else:
-        # cart for non-logged users
+        # Get cart object inside cookie storage and parse it to json
+        try:
+            cart = json.loads(request.COOKIES["cart"])
+        except:
+            cart = {}
+            print("CART:", cart)
+
         items = []
         orden = {"get_cart_total": 0, "get_cart_items": 0}
         cartItems = orden["get_cart_items"]
+
+        # fetch products in cart Cookie and pass them to cartItems
+        for i in cart:
+            try:
+                cartItems += cart[i]["quantity"]
+
+                producto = Producto.objects.get(id=i)
+                total = producto.precio * cart[i]["quantity"]
+
+                orden["get_cart_total"] += total
+                orden["get_cart_items"] += cart[i]["quantity"]
+
+                #
+                # TO-DO: pasar a item{} solamente los campos usados en la vista "checkout"
+                #
+                item = {
+                    "id": producto.id,
+                    "producto": {
+                        "id": producto.id,
+                        "nombre": producto.nombre,
+                        "precio": producto.precio,
+                        "imagen": producto.imagen,
+                    },
+                    "cantidad": cart[i]["quantity"],
+                    "get_total": total,
+                }
+                items.append(item)
+            except:
+                pass
 
     data = {
         "items": items,
