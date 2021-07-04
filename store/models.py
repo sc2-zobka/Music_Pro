@@ -123,15 +123,15 @@ class Orden(models.Model):
     retiro_en_tienda = models.BooleanField(help_text="¿Pedido para despacho?", default=False)
 
     def __str__(self):
-        return str(self.id)
+        return f"Orden de compra #{self.id} asociada a {self.cliente}"
 
     class Meta:
-        verbose_name = _("Orden")
-        verbose_name_plural = _("Ordenes")
+        verbose_name = "Orden"
+        verbose_name_plural = "Ordenes"
 
     @property
     def get_cart_total(self):
-        orden_items = self.ordenitem_set.all()  # ordenitems???
+        orden_items = self.ordenitem_set.all()
         total = sum([item.get_total for item in orden_items])
         return total
 
@@ -157,6 +157,9 @@ class OrdenItem(models.Model):
         total = self.producto.precio * self.cantidad
         return total
 
+    def __str__(self):
+        return f"{self.producto.nombre} -> Orden #{self.orden}"
+
 
 class OrdenDeDespacho(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True)
@@ -169,7 +172,7 @@ class OrdenDeDespacho(models.Model):
     fecha_agregado = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.direccion
+        return f"Orden despacho #{self.id} asociada a Orden de compra #{self.orden}"
 
 
 class Contacto(models.Model):

@@ -22,20 +22,17 @@ def update_item(request):
     data = json.loads(request.body)
     productId = data["productId"]
     action = data["action"]
-    # # # # # # # # # # # # # # # # # # #
-    print("Action", action)
-    print("Product", productId)
-    # # # # # # # # # # # # # # # # # # #
 
     cliente = request.user.cliente
     producto = Producto.objects.get(id=productId)
     orden, created = Orden.objects.get_or_create(cliente=cliente, es_completa=False)
+
     ordenItem, created = OrdenItem.objects.get_or_create(orden=orden, producto=producto)
 
     if action == "add":
-        ordenItem.cantidad += 1
+        ordenItem.cantidad = ordenItem.cantidad + 1
     elif action == "remove":
-        ordenItem.cantidad -= 1
+        ordenItem.cantidad = ordenItem.cantidad - 1
 
     ordenItem.save()
 
@@ -48,13 +45,14 @@ def update_item(request):
 def tienda(request):
 
     if request.user.is_authenticated:
+
         cliente = request.user.cliente
-        # params of get_or_create() must be fields of the Orden model
-        orden, created = Orden.objects.get_or_create(cliente=cliente, es_aceptada=False)
+        orden, created = Orden.objects.get_or_create(cliente=cliente, es_completa=False)
         items = orden.ordenitem_set.all()
         cartItems = orden.get_cart_items
+
     else:
-        # Empty cart for non-logged users
+        # Non-logged users
         items = []
         orden = {"get_cart_total": 0, "get_cart_items": 0}
         cartItems = orden["get_cart_items"]
@@ -68,11 +66,10 @@ def tienda(request):
 
 
 def carro(request):
-    # cart for logged in users
+
     if request.user.is_authenticated:
         cliente = request.user.cliente
-        # params of get_or_create() must be fields of the Orden model
-        orden, created = Orden.objects.get_or_create(cliente=cliente, es_aceptada=False)
+        orden, created = Orden.objects.get_or_create(cliente=cliente, es_completa=False)
         items = orden.ordenitem_set.all()
         cartItems = orden.get_cart_items
     else:
@@ -94,8 +91,7 @@ def checkout(request):
 
     if request.user.is_authenticated:
         cliente = request.user.cliente
-        # params of get_or_create() must be fields of the Orden model
-        orden, created = Orden.objects.get_or_create(cliente=cliente, es_aceptada=False)
+        orden, created = Orden.objects.get_or_create(cliente=cliente, es_completa=False)
         items = orden.ordenitem_set.all()
         cartItems = orden.get_cart_items
     else:
@@ -131,6 +127,25 @@ def contacto(request):
         data["form"] = formulario
 
     return render(request, "store/contacto.html", data)
+
+
+def transferencia(request):
+
+    if request.user.is_authenticated:
+        cliente = request.user.cliente
+        orden, created = Orden.objects.get_or_create(cliente=cliente, es_aceptada=False)
+
+    else:
+        # Empty cart for non-logged users
+        items = []
+        orden = {"get_cart_total": 0, "get_cart_items": 0}
+        cartItems = orden["get_cart_items"]
+
+    data = {
+        "orden": orden,
+    }
+
+    return render(request, "store/transferencia.html", data)
 
 
 def realizar_pedido(request):
@@ -321,7 +336,6 @@ def procesar_orden(request):
         cliente = request.user.cliente
         orden, created = Orden.objects.get_or_create(cliente=cliente, es_completa=False)
         total = int(data["form"]["total"])
-
         despacho = data["shipping"]["despacho"]
 
         if despacho is None:
@@ -335,7 +349,7 @@ def procesar_orden(request):
         orden.save()
 
         if orden.es_completa == True and orden.retiro_en_tienda == False:
-            # create Orden de Despacho instance
+
             OrdenDeDespacho.objects.create(
                 cliente=cliente,
                 orden=orden,

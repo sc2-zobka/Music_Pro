@@ -1,3 +1,4 @@
+from django.contrib.auth.views import LogoutView
 from django.urls import path
 
 from .views import (
@@ -14,12 +15,14 @@ from .views import (
     realizar_pedido,
     registro,
     tienda,
+    transferencia,
     update_item,
 )
 
 urlpatterns = [
     path("", tienda, name="tienda"),
     path("carro/", carro, name="carro"),
+    path("transferencia/", transferencia, name="transferencia"),
     path("checkout/", checkout, name="checkout"),
     path("contacto/", contacto, name="contacto"),
     path("registro/", registro, name="registro"),
