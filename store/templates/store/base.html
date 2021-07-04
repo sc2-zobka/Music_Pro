@@ -85,7 +85,6 @@
             <a class="nav-link" href="{% url 'ordenes_pedido' %}">Ordenes de Pedido<span class="sr-only"></span></a>
           </li>
           {% endif %}
-          {{ request.session.CURRENCY_CODES.model }}
           <div class="form-group">
             <select id="cod-moneda" class="selectpicker form-control">
               <option selected>Seleccionar moneda</option>

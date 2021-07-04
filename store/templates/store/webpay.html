@@ -1,0 +1,47 @@
+{% extends 'store/base.html' %} 
+{% load static %}
+
+{% block title %}
+ - Pagar por transbank
+{% endblock %}
+
+{% load humanize %}
+
+{% block contenido %}
+    <p>Valor: {{ monto }}</p>
+    <p>Orden compra: {{ orden_compra }}</p>
+    <form action="{{ form }}" method="post">
+        {% csrf_token %}
+        <input hidden name="token_ws" value="{{ token_ws }}" />
+        <input type="submit" value="Pagar"class="btn btn-lg btn-primary btn-block">
+    </form>
+{% endblock contenido %}
+
+{% block js %}
+{% for message in messages %}
+    {% if message.tags  == 'error'%}
+    <script>
+        Swal.fire({
+            title: "Error en Validación",
+            text: "{{message}}",
+            icon: "error",
+            timer: 5000,
+            timerProgressBar: true
+        })
+    </script>
+    {% else %}
+    <script>
+        Swal.fire({
+            title: "Compra",
+            text: "{{ message }}",
+            icon: "success",
+            button: "Aceptar",
+            timer: 5000,
+            timerProgressBar: true
+        }).then(() => {
+            window.location.href = "{% url 'tienda' %}"
+        });
+    </script>
+    {% endif %}
+{% endfor %}
+{% endblock %}

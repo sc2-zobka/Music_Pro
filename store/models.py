@@ -121,6 +121,7 @@ class Orden(models.Model):
     )
     transaction_id = models.CharField(max_length=100, null=True)
     retiro_en_tienda = models.BooleanField(help_text="¿Pedido para despacho?", default=False)
+    tienda = models.ForeignKey(Tienda, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return str(self.id)
@@ -151,6 +152,9 @@ class OrdenItem(models.Model):
     class Meta:
         verbose_name = "Orden Item"
         verbose_name_plural = "Orden Item"
+
+    def __str__(self):
+        return self.producto
 
     @property
     def get_total(self):

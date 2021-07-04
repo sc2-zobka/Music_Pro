@@ -8,15 +8,19 @@ from .views import (
     consultar_producto,
     contacto,
     detalle_producto,
+    final_webpay,
     loguear,
     modificar_cliente,
     ordenes_pedido,
     pedido_detalle,
+    procesar_orden,
     realizar_pedido,
     registro,
+    retorno_webpay,
     seleccionar_moneda,
     tienda,
     update_item,
+    webpay,
 )
 
 urlpatterns = [
@@ -25,6 +29,7 @@ urlpatterns = [
     path("checkout/", checkout, name="checkout"),
     path("contacto/", contacto, name="contacto"),
     path("registro/", registro, name="registro"),
+    path("procesar_orden/", procesar_orden, name="procesar_orden"),
     path("update_item/", update_item, name="update_item"),
     path("modificar_cliente/<id>", modificar_cliente, name="modificar_cliente"),
     path("consultar_producto/", consultar_producto, name="consultar_producto"),
@@ -36,4 +41,7 @@ urlpatterns = [
     path("accounts/login/", loguear, name="login"),
     path("accounts/change_password/", cambiar_contrasena, name="change_password"),
     path("seleccionar_moneda/<str:codigo>/", seleccionar_moneda, name="seleccionar_moneda"),
+    path("webpay/<str:monto>", webpay, name="webpay"),
+    path("retorno_webpay/", retorno_webpay, name="retorno_webpay"),
+    path("final_webpay/", final_webpay, name="final_webpay"),
 ]

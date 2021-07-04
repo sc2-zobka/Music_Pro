@@ -1,3 +1,4 @@
+import datetime
 import json
 
 import requests
@@ -9,6 +10,7 @@ from django.contrib.auth.models import Group, User
 from django.core import serializers
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.csrf import csrf_exempt
 
 # PRUEBA
 from transbank.webpay.webpay_plus import transaction
@@ -132,6 +134,8 @@ def tienda(request):
 
 
 def carro(request):
+    valor_cambio = 1
+
     # cart for logged in users
     if request.user.is_authenticated:
         cliente = request.user.cliente
@@ -145,16 +149,22 @@ def carro(request):
         orden = {"get_cart_total": 0, "get_cart_items": 0}
         cartItems = orden["get_cart_items"]
 
+    if "AMT_CONVERSION" in request.session:
+        valor_cambio = float(request.session["AMT_CONVERSION"][request.session["CURRENCY_CODE"]])
+
     data = {
         "items": items,
         "orden": orden,
         "cartItems": cartItems,
+        "valor_cambio": valor_cambio,
     }
 
     return render(request, "store/carro.html", data)
 
 
 def checkout(request):
+    valor_cambio = 1
+
     if request.user.is_authenticated:
         cliente = request.user.cliente
         # params of get_or_create() must be fields of the Orden model
@@ -167,10 +177,17 @@ def checkout(request):
         orden = {"get_cart_total": 0, "get_cart_items": 0}
         cartItems = orden["get_cart_items"]
 
+    tiendas = Tienda.objects.all()
+
+    if "AMT_CONVERSION" in request.session:
+        valor_cambio = float(request.session["AMT_CONVERSION"][request.session["CURRENCY_CODE"]])
+
     data = {
         "items": items,
         "orden": orden,
         "cartItems": cartItems,
+        "tiendas": tiendas,
+        "valor_cambio": valor_cambio,
     }
 
     return render(request, "store/checkout.html", data)
@@ -426,21 +443,150 @@ def detalle_producto(request, id):
     return render(request, "store/detalle_producto.html", data)
 
 
-def webpay(request):
-    monto = 2000
-    orden_compra = 123456789
-    sesion_id = "sessionId"
+def procesar_orden(request):
 
-    url_regreso = "http://localhost:8000"
-    url_final = "http://localhost:8000"
+    transaction_id = datetime.datetime.now().timestamp()
+    data = json.loads(request.body)
 
-    response = transaction.Transaction.create(orden_compra, sesion_id, monto, url_regreso)
+    if request.user.is_authenticated:
+
+        cliente = request.user.cliente
+        orden, created = Orden.objects.get_or_create(cliente=cliente, es_completa=False)
+        total = int(data["form"]["total"])
+
+        despacho = data["shipping"]["despacho"]
+
+        if despacho is None:
+            orden.retiro_en_tienda = True
+
+        orden.transaction_id = transaction_id
+
+        # check if total sent by frontend is equal to total in backend
+        if total == int(orden.get_cart_total):
+            orden.es_completa = True
+        orden.save()
+
+        if orden.es_completa == True and orden.retiro_en_tienda == False:
+            # create Orden de Despacho instance
+            OrdenDeDespacho.objects.create(
+                cliente=cliente,
+                orden=orden,
+                direccion=data["shipping"]["direccion"],
+                ciudad=data["shipping"]["ciudad"],
+                comuna=data["shipping"]["comuna"],
+                region=data["shipping"]["region"],
+                zipcode=data["shipping"]["zipcode"],
+            )
+
+    else:
+        print("User is not logged in")
+
+    return JsonResponse("Pago realizado..", safe=False)
+
+
+@csrf_exempt
+def webpay(request, monto):
+    session_id = "sessionId"
+
+    if "sessionid" in request.COOKIES:
+        session_id = request.COOKIES["sessionid"]
+
+    monto_pagar = float(monto)
+    orden_a_compra = datetime.datetime.now().timestamp()
+
+    url_regreso = "http://localhost:8000/retorno_webpay/"
+
+    response = transaction.Transaction.create(orden_a_compra, session_id, monto_pagar, url_regreso)
 
     token_ws = response.token
-    token_accion = response.url
+    form = response.url
 
     data = {
-        "monto": monto,
-        "orden_compra": orden_compra,
+        "monto": monto_pagar,
+        "orden_compra": orden_a_compra,
         "token_ws": token_ws,
+        "form": form,
     }
+
+    return render(request, "store/webpay.html", data)
+
+
+@csrf_exempt
+def retorno_webpay(request):
+    token = request.POST["token_ws"]
+    resultado = transaction.Transaction.commit(token)
+    obtenido = resultado.response_code
+
+    data = {
+        "codigo_autorizacion": resultado.authorization_code,
+        "monto": resultado.amount,
+        "codigo_respuesta": obtenido,
+        "url_redireccion": "http://localhost:8000/final_webpay/",
+        "token_ws": token,
+    }
+
+    return render(request, "store/retorno_webpay.html", data)
+
+
+@csrf_exempt
+def final_webpay(request):
+    tienda = None
+    direccion = None
+    comuna = None
+    codigo_zip = None
+    ciudad = None
+    region = None
+
+    # Obtener datos de envio
+    if "isdespacho" in request.COOKIES:
+        if request.COOKIES["isdespacho"] == "1":
+            direccion = request.COOKIES["direccion"]
+            comuna = request.COOKIES["comuna"]
+            codigo_zip = request.COOKIES["zipcode"]
+            ciudad = request.COOKIES["ciudad"]
+            region = request.COOKIES["region"]
+        else:
+            tienda = request.COOKIES["tienda"]
+
+        if request.user.is_authenticated:
+            token = request.POST["token_ws"]
+            resultado = transaction.Transaction.commit(token)
+
+            cliente = request.user.cliente
+            # orden = Orden.objects.create(cliente=cliente, es_completa=False)
+            orden = Orden()
+            total = resultado.amount
+
+            if request.COOKIES["isdespacho"] == "0":
+                orden.retiro_en_tienda = True
+
+                tienda = Tienda.objects.get(nombre=tienda)
+                orden.tienda = tienda
+
+            orden.transaction_id = resultado.buy_order
+
+            # check if total sent by frontend is equal to total in backend
+            # if total == int(orden.get_cart_total):
+            orden.es_completa = True
+            orden.save()
+
+            if orden.es_completa == True and orden.retiro_en_tienda == False:
+                # create Orden de Despacho instance
+                OrdenDeDespacho.objects.create(
+                    cliente=cliente,
+                    orden=orden,
+                    direccion=direccion,
+                    ciudad=ciudad,
+                    comuna=comuna,
+                    region=region,
+                    zipcode=codigo_zip,
+                )
+
+        else:
+            print("User is not logged in")
+
+        messages.success(request, "Compra realizada correctamente!")
+    else:
+        print("no entro")
+
+    return render(request, "store/final_webpay.html")

@@ -6,6 +6,7 @@
  - Carrito
 {% endblock %}
 
+{% load multiplicar %}
 
 {% block contenido %}
 {% load humanize %}
@@ -19,7 +20,7 @@
 				<table class="table">
 					<tr>
 						<th><h5>Items:<strong> {{ orden.get_cart_items }} </strong></h5></th>
-						<th><h5>Total:<strong> ${{ orden.get_cart_total | intcomma }}</strong></h5></th>
+						<th><h5>Total:<strong> ${{ orden.get_cart_total|multiplicar:valor_cambio|intcomma }} {{ request.session.CURRENCY_CODE }}</strong></h5></th>
 						<th>
 							<a  style="float:right; margin:5px;" class="btn btn-success" href="{% url 'checkout' %}">Checkout</a>
 						</th>
@@ -41,7 +42,7 @@
 					<div class="cart-row">
 						<div style="flex:2"><img class="row-image" src=" {{ item.producto.imagen.url }} "></div>
 						<div style="flex:2"><p>{{ item.producto.nombre | capfirst }}</p></div>
-						<div style="flex:1"><p>${{ item.producto.precio | intcomma }}</p></div>
+						<div style="flex:1"><p>${{ item.producto.precio|multiplicar:valor_cambio|intcomma }} {{ request.session.CURRENCY_CODE }}</p></div>
 						<div style="flex:1">
 							<p class="quantity"> x{{ item.cantidad }} </p>
 							<div class="quantity">
@@ -50,7 +51,7 @@
 								<img data-product="{{ item.producto.id }}" data-action="remove" class="chg-quantity update-cart" src="{% static  'images/arrow-down.png' %}">
 							</div>
 						</div>
-						<div style="flex:1"><p>${{ item.get_total | intcomma }} </p></div>
+						<div style="flex:1"><p>${{ item.get_total|multiplicar:valor_cambio|intcomma }} {{ request.session.CURRENCY_CODE }}</p></div>
 					</div>
 				{% endfor %}
 
