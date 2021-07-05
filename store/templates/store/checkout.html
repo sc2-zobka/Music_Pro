@@ -17,7 +17,13 @@
 							<input required class="form-control" type="text" name="nombre" placeholder="Nombre..">
 						</div>
 						<div class="form-field">
+							<input required class="form-control" type="text" name="apellido" placeholder="Apellidos..">
+						</div>
+						<div class="form-field">
 							<input required class="form-control" type="email" name="email" placeholder="Email..">
+						</div>
+						<div class="form-field">
+							<input required class="form-control" type="text" name="telefono" placeholder="Telefono..">
 						</div>
 					</div>
 						<div id="retiro_tienda" style="display: inline">
@@ -162,11 +168,16 @@
 	    	submitFormData()
 	    })
 
+		//
+		// Make Payment button (Transbank button)
+		//
 		function submitFormData(){
 
 			var userFormData = {
 				'nombre' : null,
 				'email' : null,
+				'apellido' : null,
+				'telefono' : null,
 				'tienda' : null,
 				'despacho' : null,
 				'total' : total
@@ -197,12 +208,15 @@
 			if (user == 'AnonymousUser'){
 	    		userFormData.nombre = form.nombre.value
 	    		userFormData.email = form.email.value
+	    		userFormData.telefono = form.telefono.value
+	    		userFormData.apellido = form.apellido.value
 				userFormData.tienda = selectedTienda()
 	    	}
 
-			//Sent data to backend
+			//Sent data to the Backend
 			var url = "/procesar_orden/"
-	    	fetch(url, {
+	    	
+			fetch(url, {
 	    		method:'POST',
 	    		headers:{
 	    			'Content-Type':'applicaiton/json',
@@ -221,6 +235,13 @@
 					"confirmButtonText": "Inicio"        
 				}).then(okay => {
 					if (okay) {
+					
+					// For non-logged users
+					// clean Cookie cart after payment it's done
+					cart = {}
+					document.cookie = "cart=" + JSON.stringify(cart) + ";domain=;path=/"
+					
+					// redirect to Home page
 					window.location.href = "{% url 'tienda' %}";
 						}
 					});
