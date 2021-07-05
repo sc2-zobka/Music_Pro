@@ -1,0 +1,55 @@
+{% extends 'store/base.html' %}
+
+{% block title %}
+ - Realizar Orden de Pedido
+{% endblock %}
+
+{% load static %}
+
+{% block js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+
+    {% if messages %}
+    <div>
+        {% for message in messages %}
+            <script>
+                Swal.fire({
+                    "title": "Feliciades",
+                    "text": "{{message}}",
+                    "icon": "success"
+                }).then( (ok) => {
+                    if (ok) {
+                        window.location.href = "{% url 'realizar_pedido' %}" 
+                        }
+                })
+            </script>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+{% endblock %}
+
+
+
+{% block contenido %}
+
+<h3 class="d-flex justify-content-center">Relizar Orden de pedido</h3>
+<hr>
+
+    <div class="row masthead">
+    <div class="col-12 col-md-6 offset-md-3">
+        {% load crispy_forms_tags %}      
+        <form method='post' enctype="multipart/form-data" >
+            {% csrf_token %}
+            {{ form | crispy }}
+            <div class="d-flex justify-content-center">
+                <input class="btn btn-secondary btn-sm" type="reset" value="Limpiar">
+                &nbsp;
+                <input class="btn btn-primary btn-sm" type="submit" value="Realizar Pedido">
+            </div>
+            
+        </form>
+    </div>
+</div>
+
+{% endblock contenido %}

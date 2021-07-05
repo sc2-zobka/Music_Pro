@@ -1,0 +1,66 @@
+{% extends 'store/base.html' %}
+
+{% block title %}
+ - Log in
+{% endblock %}
+
+{% load static %}
+
+{% block contenido %}
+<div class="masthead" id="contenido">
+    <div class="row">
+        <div class="col-12 col-md-4 offset-md-4">
+            <h1 class="h3 mb-3 font-weight-normal text-center">Cambiar contraseña</h1>
+            {% load crispy_forms_tags %}
+            <form action="" method='post' class="form-signin">
+                {% csrf_token %}
+                {{ form | crispy }}
+                <input type="submit" value="Cambiar contrseña"class="btn btn-lg btn-primary btn-block">
+                <tr>
+                <a href="{% url 'tienda' %}">Home</a> |
+                <a href="{% url 'registro' %}">Registro</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+{% if messages %}
+<div>
+	{% for message in messages %}
+	{% if message.tags  == 'error' %}
+	<script>
+		Swal.fire({
+			title: "Error al cambiar la contraseña",
+			text: "{{message}}",
+			icon: "error",
+			timer: 5000,
+			timerProgressBar: true
+		})
+	</script>
+    {% elif message.tags  == 'warning'%}
+	<script>
+		Swal.fire({
+			title: "¡Atención!",
+			text: "{{message}}",
+			icon: "warning",
+			timer: 5000,
+			timerProgressBar: true
+		})
+	</script>
+	{% else %}
+	<script>
+		Swal.fire({
+			title: "Cambio de contraseña",
+			text: "{{message}}",
+			icon: "success",
+			timer: 5000,
+			timerProgressBar: true
+		})
+	</script>
+	{% endif %}
+	{% endfor %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends 'store/base.html' %}
+
+{% block title %}
+ - Registro
+{% endblock %}
+
+{% load static %}
+
+{% block contenido %}
+
+    <div class="row masthead" style="height:100%">
+        <div class="col-12 col-md-4 offset-md-4">
+            <h1 class="h3 mb-3 font-weight-normal text-center">Modificar Cliente</h1>
+            {% load crispy_forms_tags %}
+            <form action="" method='post'>
+                {% csrf_token %}
+                {{ form | crispy }}
+                <div class="display-4">
+                <input class="btn btn-primary btn-sm" type="submit" value="Modificar">
+                </div>
+                <a href="{% url 'change_password' %}">Cambiar contraseña</a>
+            </form>
+            <br>
+        </div>
+    </div>
+
+{% endblock %}

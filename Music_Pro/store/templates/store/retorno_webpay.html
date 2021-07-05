@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+</head>
+<body>
+    {% if codigo_respuesta == 0 %}
+    <form action="{{ url_redireccion }}" method="POST" id="returnForm">
+        <input hidden name="token_ws" value="{{ token_ws }}" />
+    </form>
+    <script>
+        window.localStorage.clear();
+        window.localStorage.setItem("authorizationCode", {{ codigo_autorizacion }});
+        window.localStorage.setItem("amount", {{ monto }});
+        window.localStorage.setItem("responseCode", {{ codigo_respuesta }});
+
+        document.getElementById("returnForm").submit();
+    </script>
+    {% else  %}
+    <script>
+        Swal.fire({
+				"title": "Transacción no autorizada!",
+				"text": "Error al validar transacción!",
+				"icon": "error",
+                button: "Aceptar",
+                timer: 5000,
+                timerProgressBar: true
+			});
+            setTimeout(function () {
+                window.location.href = "/";
+            }, 5000)
+    </script>
+    {% endif %}
+</body>
