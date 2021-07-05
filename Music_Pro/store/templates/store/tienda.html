@@ -1,0 +1,121 @@
+{% extends 'store/base.html' %} 
+{% load static %}
+
+{% block title %}
+ - Tienda
+{% endblock %}
+
+{% load humanize %}
+
+{% load multiplicar %}
+
+{% block contenido %}
+
+	<div class="row">
+		<hr>
+			<h2><span> ¡PRODUCTOS NUEVOS! </span></h2>
+		<hr>
+	</div>
+
+    <div class="row">
+		{% for producto in productos  %}
+			{% if producto.es_nuevo %}
+				<div class="col-lg-4">
+					{% if producto.imagen %}
+						<img class="thumbnail" src="{{ producto.imagen.url }}">
+					{% endif %}
+					<div class="box-element product">
+						<h6><strong>{{ producto.nombre }}</strong></h6>
+						<hr>
+
+						<button data-product="{{producto.id}}" data-action="add" 
+						class="btn btn-outline-secondary add-btn update-cart">Add to Cart</button>
+						{% comment %} <a class="btn btn-outline-success" href="#">View</a> {% endcomment %}
+						<button onclick="abrir_modal_vista('{% url 'detalle_producto' producto.id %}')" class="btn btn-outline-success">View</button>
+						<h5 style="display: inline-block; float: right">
+						<strong>$ {{ producto.precio|multiplicar:valor_cambio|intcomma }} {{ request.session.CURRENCY_CODE }}</strong></h5>
+					</div>
+				</div>
+			{% endif %}	
+		{% endfor %}	
+	</div>
+
+	<div class="row">
+		<hr>
+			<h2 style="margin-top: 25px; " ><span> ¡PRODUCTOS EN OFERTA! </span></h2>
+		<hr>
+	</div>
+
+	<div class="row">
+		{% for producto in productos  %}
+			{% if producto.es_oferta %}
+				<div class="col-lg-4">
+						{% if producto.imagen %}
+							<img class="thumbnail" src="{{ producto.imagen.url }}">
+						{% endif %}
+					<div class="box-element product">
+						<h6><strong>{{ producto.nombre }}</strong></h6>
+						<hr>
+
+						<button data-product="{{producto.id}}" data-action="add"  
+						class="btn btn-outline-secondary add-btn update-cart">Add to Cart</button>
+						{% comment %} <a class="btn btn-outline-success" href="#">View</a> {% endcomment %}
+						<button onclick="abrir_modal_vista('{% url 'detalle_producto' producto.id %}')" class="btn btn-outline-success">View</button>
+						<h5 style="display: inline-block; float: right">
+						<strong>$ {{ producto.precio|multiplicar:valor_cambio|intcomma }} {{ request.session.CURRENCY_CODE }}</strong></h5>
+
+					</div>
+				</div>
+			{% endif %}	
+		{% endfor %}
+	</div>
+
+	<div class="modal fade" id="ver" role="dialog">
+
+	</div>
+	{% block js %}
+        <script type="text/javascript">
+            //var $ = JQuery.noConflict();
+            function abrir_modal_vista(url){
+                $('#ver').load(url, function() {
+                    $(this).modal('show');
+                });
+            }
+        </script>
+
+		{% for message in messages %}
+			{% if message.tags  == 'error'%}
+			<script>
+				Swal.fire({
+					title: "Error en Validación",
+					text: "{{message}}",
+					icon: "error",
+					timer: 5000,
+					timerProgressBar: true
+				})
+			</script>
+			{% elif message.tags  == 'warning'%}
+			<script>
+				Swal.fire({
+					title: "Error al procesar compra",
+					text: "{{message}}",
+					icon: "warning",
+					timer: 5000,
+					timerProgressBar: true
+				})
+			</script>
+			{% else %}
+			<script>
+				Swal.fire({
+					title: "Compra",
+					text: "{{ message }}",
+					icon: "success",
+					button: "Aceptar",
+					timer: 5000,
+					timerProgressBar: true
+				});
+			</script>
+			{% endif %}
+		{% endfor %}
+	{% endblock %}
+{% endblock contenido %}

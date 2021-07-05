@@ -1,0 +1,65 @@
+{% extends 'store/base.html' %} 
+{% load static %}
+
+{% block title %}
+ - Compra exitosa
+{% endblock %}
+
+{% load humanize %}
+
+{% block contenido %}
+    <h4 class="card-title">Resumen de transacción</h4>
+    <form action="/">
+        <div class="form-group">
+            <label>Cantidad pagada</label>
+            <input type="text" class="form-control" id="amount" readonly>
+        </div>
+        <div class="form-group">
+            <label>Codigo de autorización</label>
+            <input type="text" class="form-control" id="authorizationCode" readonly>
+        </div>
+        <div class="form-group">
+            <label>Codigo de respuesta</label>
+            <input type="text" class="form-control" id="responseCode" readonly>
+        </div>
+        <button type="submit" class="btn btn-primary">-> Ir a la tienda</button>
+    </form>
+
+    <script>
+        document.getElementById("amount").value = window.localStorage.getItem("amount");
+        document.getElementById("authorizationCode").value = window.localStorage.getItem("authorizationCode");
+        document.getElementById("responseCode").value = window.localStorage.getItem("responseCode");
+
+        // For non-logged users
+        // clean Cookie cart after payment it's done
+        cart = {}
+        document.cookie = "cart=" + JSON.stringify(cart) + ";domain=;path=/"
+    </script>
+{% endblock %}
+
+{% block js %}
+{% for message in messages %}
+    {% if message.tags  == 'error'%}
+    <script>
+        Swal.fire({
+            title: "Error en Validación",
+            text: "{{message}}",
+            icon: "error",
+            timer: 5000,
+            timerProgressBar: true
+        })
+    </script>
+    {% else %}
+    <script>
+        Swal.fire({
+            title: "Compra",
+            text: "{{ message }}",
+            icon: "success",
+            button: "Aceptar",
+            timer: 5000,
+            timerProgressBar: true
+        });
+    </script>
+    {% endif %}
+{% endfor %}
+{% endblock %}
