@@ -71,13 +71,22 @@
 			</div>
 
 			<br>
-			<div class="box-element" id="payment-info">
-				<small>Transferencia</small>
-				<button id="make-payment">Mostrar informaciòn</button>
-			</div>
-			<div class="box-element" id="payment-info">
-				<small>Transbank</small>
-				<button id="make-payment-tb" onclick="webpay()">Realizar Pago</button>
+
+
+			{% comment %}
+										METODO DE PAGO
+			{% endcomment %}
+
+			<div class="box-element hidden d-flex justify-content-around" id="payment-info">
+				
+				<div>
+					{% comment %} <button id="make-payment" class="btn btn-primary rounded btn-lg" onclick="webpay()">Pagar con Transbank</button> {% endcomment %}
+					<button class="btn btn-primary rounded btn-lg" onclick="webpay()">Pagar con Transbank</button>
+				</div>
+				<div>
+					{% comment %} <a class="btn btn-warning rounded btn-lg" href="{% url 'transferencia' %}">Realizar Transferencia</a> {% endcomment %}
+					<a class="btn btn-warning rounded btn-lg" id="make-payment">Realizar Transferencia</a>
+				</div>
 			</div>
 			
 		</div>
@@ -141,20 +150,19 @@
 	 	//Hide submit button once form's been sent
 		//
 		var form = document.getElementById('form')
+
 		form.addEventListener('submit', (e) => {
 			
 			e.preventDefault()
-			console.log("Form submitted...")
 			document.getElementById('form-button').classList.add("hidden")
 			document.getElementById('payment-info').classList.remove("hidden")
 		})
 
-		document.getElementById('make-payment').addEventListener('click', function(e){
+		document.getElementById('make-payment').addEventListener('click', (e) => {
 	    	submitFormData()
 	    })
 
 		function submitFormData(){
-			console.log("Payment button clicked...")
 
 			var userFormData = {
 				'nombre' : null,
@@ -181,12 +189,9 @@
 				shippingInfo.region = form.region.value
 		    	shippingInfo.zipcode = form.zipcode.value
 				shippingInfo.despacho = true
-				console.log("Listo para despacho...")
-				
 			} else if (!chkBox.checked ) {
 				userFormData.tienda = selectedTienda()
 				userFormData.despacho = false
-				console.log("Retiro en Tienda: " + userFormData.tienda)
 			}
 			
 			if (user == 'AnonymousUser'){
@@ -194,9 +199,6 @@
 	    		userFormData.email = form.email.value
 				userFormData.tienda = selectedTienda()
 	    	}
-
-	    	console.log('Shipping Info:', shippingInfo)
-	    	console.log('User Info:', userFormData)
 
 			//Sent data to backend
 			var url = "/procesar_orden/"
@@ -208,21 +210,24 @@
 	    		}, 
 	    		body:JSON.stringify({'form':userFormData, 'shipping':shippingInfo}),
 	    		
-	    	})
-	    	.then((response) => response.json())
-			
-			Swal.fire({
+            })
+            .then((response) => response.json())
+			.then((data) => {
+    			Swal.fire({
 				"title": "Gracias!",
 				"text": "Compra Exitosa!",
 				"icon": "success",
 				"confirmButtonText": "Inicio"        
-			}).then(okay => {
-				if (okay) {
-				window.location.href = "{% url 'tienda' %}";
+				}).then(okay => {
+					if (okay) {
+						window.location.href = "{% url 'tienda' %}";
 					}
 				});
+			})
+			
 		}
 	</script>
+	
 {% endblock contenido %}
 
 {% block js %}

@@ -2,7 +2,6 @@ from django import forms
 from django.contrib.auth.forms import PasswordChangeForm, UserCreationForm
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.forms import widgets
 
 from .models import Cliente, Contacto, PedidoCasaCentral, User
 

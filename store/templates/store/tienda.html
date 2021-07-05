@@ -82,5 +82,40 @@
                 });
             }
         </script>
+
+		{% for message in messages %}
+			{% if message.tags  == 'error'%}
+			<script>
+				Swal.fire({
+					title: "Error en Validación",
+					text: "{{message}}",
+					icon: "error",
+					timer: 5000,
+					timerProgressBar: true
+				})
+			</script>
+			{% elif message.tags  == 'warning'%}
+			<script>
+				Swal.fire({
+					title: "Error al procesar compra",
+					text: "{{message}}",
+					icon: "warning",
+					timer: 5000,
+					timerProgressBar: true
+				})
+			</script>
+			{% else %}
+			<script>
+				Swal.fire({
+					title: "Compra",
+					text: "{{ message }}",
+					icon: "success",
+					button: "Aceptar",
+					timer: 5000,
+					timerProgressBar: true
+				});
+			</script>
+			{% endif %}
+		{% endfor %}
 	{% endblock %}
 {% endblock contenido %}

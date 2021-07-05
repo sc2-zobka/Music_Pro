@@ -11,8 +11,6 @@ from django.core import serializers
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
-
-# PRUEBA
 from transbank.webpay.webpay_plus import transaction
 
 from .forms import (
@@ -29,20 +27,17 @@ def update_item(request):
     data = json.loads(request.body)
     productId = data["productId"]
     action = data["action"]
-    # # # # # # # # # # # # # # # # # # #
-    print("Action", action)
-    print("Product", productId)
-    # # # # # # # # # # # # # # # # # # #
 
     cliente = request.user.cliente
     producto = Producto.objects.get(id=productId)
     orden, created = Orden.objects.get_or_create(cliente=cliente, es_completa=False)
+
     ordenItem, created = OrdenItem.objects.get_or_create(orden=orden, producto=producto)
 
     if action == "add":
-        ordenItem.cantidad += 1
+        ordenItem.cantidad = ordenItem.cantidad + 1
     elif action == "remove":
-        ordenItem.cantidad -= 1
+        ordenItem.cantidad = ordenItem.cantidad - 1
 
     ordenItem.save()
 
@@ -91,20 +86,17 @@ def tienda(request):
     if not "CURRENCY_CODE" in request.session:
         request.session["CURRENCY_CODE"] = "CLP"
 
-    print(request.session["CURRENCY_CODE"])
-
     if request.user.is_authenticated:
         try:
             if not request.user.is_staff:
                 cliente = request.user.cliente
-                # params of get_or_create() must be fields of the Orden model
                 orden, created = Orden.objects.get_or_create(cliente=cliente, es_aceptada=False)
                 items = orden.ordenitem_set.all()
                 cartItems = orden.get_cart_items
         except Exception as e:
             print(e)
     else:
-        # Empty cart for non-logged users
+        # Non-logged users
         items = []
         orden = {"get_cart_total": 0, "get_cart_items": 0}
         cartItems = orden["get_cart_items"]
@@ -136,11 +128,9 @@ def tienda(request):
 def carro(request):
     valor_cambio = 1
 
-    # cart for logged in users
     if request.user.is_authenticated:
         cliente = request.user.cliente
-        # params of get_or_create() must be fields of the Orden model
-        orden, created = Orden.objects.get_or_create(cliente=cliente, es_aceptada=False)
+        orden, created = Orden.objects.get_or_create(cliente=cliente, es_completa=False)
         items = orden.ordenitem_set.all()
         cartItems = orden.get_cart_items
     else:
@@ -167,8 +157,7 @@ def checkout(request):
 
     if request.user.is_authenticated:
         cliente = request.user.cliente
-        # params of get_or_create() must be fields of the Orden model
-        orden, created = Orden.objects.get_or_create(cliente=cliente, es_aceptada=False)
+        orden, created = Orden.objects.get_or_create(cliente=cliente, es_completa=False)
         items = orden.ordenitem_set.all()
         cartItems = orden.get_cart_items
     else:
@@ -178,6 +167,10 @@ def checkout(request):
         cartItems = orden["get_cart_items"]
 
     tiendas = Tienda.objects.all()
+
+    if len(items) <= 0:
+        messages.warning(request, "Carro de compras vacio, agrege productos")
+        return redirect("tienda")
 
     if "AMT_CONVERSION" in request.session:
         valor_cambio = float(request.session["AMT_CONVERSION"][request.session["CURRENCY_CODE"]])
@@ -208,6 +201,30 @@ def contacto(request):
         data["form"] = formulario
 
     return render(request, "store/contacto.html", data)
+
+
+def transferencia(request):
+
+    if request.user.is_authenticated:
+        cliente = request.user.cliente
+        orden, created = Orden.objects.get_or_create(cliente=cliente, es_aceptada=False)
+
+    else:
+        # Empty cart for non-logged users
+        items = []
+        orden = {"get_cart_total": 0, "get_cart_items": 0}
+        cartItems = orden["get_cart_items"]
+
+    if request.method == "POST":
+        print("entro")
+        messages.success(request, "Orden de compra registrada, recuerde enviar la evidencia al correo dado")
+        return redirect("tienda")
+
+    data = {
+        "orden": orden,
+    }
+
+    return render(request, "store/transferencia.html", data)
 
 
 def realizar_pedido(request):
@@ -341,7 +358,11 @@ def modificar_cliente(request, id):
             formulario = ModificarClienteForms(data=request.POST, instance=cliente)
 
             if formulario.is_valid():
+                usuario = User.objects.get(username=request.user.username)
+                usuario.username = formulario.cleaned_data["nombre_usuario"]
+                usuario.save()
                 formulario.save()
+
                 return redirect(to="tienda")
 
             data["form"] = formulario
@@ -361,9 +382,9 @@ def consultar_producto(request):
         url = str()
 
         if codigo_producto:
-            url = "http://localhost:8010/api/productos/?codigo_producto=" + str(codigo_producto)
+            url = "http://localhost:8010/api/v1/productos/?codigo_producto=" + str(codigo_producto)
         else:
-            url = "http://localhost:8010/api/productos/"
+            url = "http://localhost:8010/api/v1/productos/"
         try:
             response = requests.get(url)
 
@@ -453,7 +474,6 @@ def procesar_orden(request):
         cliente = request.user.cliente
         orden, created = Orden.objects.get_or_create(cliente=cliente, es_completa=False)
         total = int(data["form"]["total"])
-
         despacho = data["shipping"]["despacho"]
 
         if despacho is None:
@@ -467,7 +487,7 @@ def procesar_orden(request):
         orden.save()
 
         if orden.es_completa == True and orden.retiro_en_tienda == False:
-            # create Orden de Despacho instance
+
             OrdenDeDespacho.objects.create(
                 cliente=cliente,
                 orden=orden,
@@ -487,6 +507,7 @@ def procesar_orden(request):
 @csrf_exempt
 def webpay(request, monto):
     session_id = "sessionId"
+    valor_cambio = 1
 
     if "sessionid" in request.COOKIES:
         session_id = request.COOKIES["sessionid"]
@@ -495,6 +516,9 @@ def webpay(request, monto):
     orden_a_compra = datetime.datetime.now().timestamp()
 
     url_regreso = "http://localhost:8000/retorno_webpay/"
+
+    if "AMT_CONVERSION" in request.session:
+        valor_cambio = float(request.session["AMT_CONVERSION"][request.session["CURRENCY_CODE"]])
 
     response = transaction.Transaction.create(orden_a_compra, session_id, monto_pagar, url_regreso)
 
@@ -506,6 +530,7 @@ def webpay(request, monto):
         "orden_compra": orden_a_compra,
         "token_ws": token_ws,
         "form": form,
+        "valor_cambio": valor_cambio,
     }
 
     return render(request, "store/webpay.html", data)
@@ -518,7 +543,7 @@ def retorno_webpay(request):
     obtenido = resultado.response_code
 
     data = {
-        "codigo_autorizacion": resultado.authorization_code,
+        "codigo_autorizacion": resultado.buy_order,
         "monto": resultado.amount,
         "codigo_respuesta": obtenido,
         "url_redireccion": "http://localhost:8000/final_webpay/",
@@ -536,6 +561,8 @@ def final_webpay(request):
     codigo_zip = None
     ciudad = None
     region = None
+
+    valor_cambio = 1
 
     # Obtener datos de envio
     if "isdespacho" in request.COOKIES:

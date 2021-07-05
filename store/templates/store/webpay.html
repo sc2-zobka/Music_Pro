@@ -5,16 +5,31 @@
  - Pagar por transbank
 {% endblock %}
 
+{% load multiplicar %}
 {% load humanize %}
 
 {% block contenido %}
-    <p>Valor: {{ monto }}</p>
+    <h4 class="card-title">Resumen de transacción</h4>
+    <form action="{{ form }}" method="post">
+        {% csrf_token %}
+        <input hidden name="token_ws" value="{{ token_ws }}" />
+        <div class="form-group">
+            <label>Cantidad a pagar</label>
+            <input type="text" class="form-control" id="amount" value="$ {{ monto|multiplicar:valor_cambio|intcomma }} {{ request.session.CURRENCY_CODE }}" readonly>
+        </div>
+        <div class="form-group">
+            <label>Orden de compra</label>
+            <input type="text" class="form-control" id="authorizationCode" value="{{ orden_compra }}" readonly>
+        </div>
+        <input type="submit" class="btn btn-primary" value="-> Pagar" />
+    </form>
+    {% comment %} <p>Valor: {{ monto }}</p>
     <p>Orden compra: {{ orden_compra }}</p>
     <form action="{{ form }}" method="post">
         {% csrf_token %}
         <input hidden name="token_ws" value="{{ token_ws }}" />
-        <input type="submit" value="Pagar"class="btn btn-lg btn-primary btn-block">
-    </form>
+        <input type="submit" value="Pagar"class="btn btn-lg btn-primary btn-block" />
+    </form> {% endcomment %}
 {% endblock contenido %}
 
 {% block js %}

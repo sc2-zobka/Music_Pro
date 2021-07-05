@@ -15,7 +15,7 @@
             <form action="" method='post' class="form-signin">
                 {% csrf_token %}
                 {{ form | crispy }}
-                <input type="submit" value="Ingresar"class="btn btn-lg btn-primary btn-block">
+                <input type="submit" value="Cambiar contrseña"class="btn btn-lg btn-primary btn-block">
                 <tr>
                 <a href="{% url 'tienda' %}">Home</a> |
                 <a href="{% url 'registro' %}">Registro</a>
