@@ -29,6 +29,11 @@
         document.getElementById("amount").value = window.localStorage.getItem("amount");
         document.getElementById("authorizationCode").value = window.localStorage.getItem("authorizationCode");
         document.getElementById("responseCode").value = window.localStorage.getItem("responseCode");
+
+        // For non-logged users
+        // clean Cookie cart after payment it's done
+        cart = {}
+        document.cookie = "cart=" + JSON.stringify(cart) + ";domain=;path=/"
     </script>
 {% endblock %}
 

@@ -7,7 +7,9 @@ from mptt.models import MPTTModel, TreeForeignKey
 class Cliente(models.Model):
     cliente = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE)
     nombre = models.CharField(max_length=200, null=True)
-    email = models.CharField(max_length=200)
+    email = models.CharField(max_length=200)  # TO-DO: refactor field by fetching email from Django User
+    # apellido = models.CharField(max_length=200, null=True)
+    # telefono = models.CharField(max_length=9, null=True)
 
     def __str__(self):
         return self.nombre
@@ -159,7 +161,7 @@ class OrdenItem(models.Model):
         return total
 
     def __str__(self):
-        return f"{self.producto.nombre} -> Orden #{self.orden}"
+        return f"{self.producto.nombre} -> Orden #{self.orden.id}"
 
 
 class OrdenDeDespacho(models.Model):
@@ -173,7 +175,7 @@ class OrdenDeDespacho(models.Model):
     fecha_agregado = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Orden despacho #{self.id} asociada a Orden de compra #{self.orden}"
+        return f"Orden despacho #{self.id}"
 
 
 class Contacto(models.Model):

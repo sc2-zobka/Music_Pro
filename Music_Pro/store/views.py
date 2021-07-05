@@ -21,6 +21,7 @@ from .forms import (
     PedidoCasaCentralForms,
 )
 from .models import *
+from .utils import cartData, cookieCart, guestOrden
 
 
 def update_item(request):
@@ -86,25 +87,15 @@ def tienda(request):
     if not "CURRENCY_CODE" in request.session:
         request.session["CURRENCY_CODE"] = "CLP"
 
-    if request.user.is_authenticated:
-        try:
-            if not request.user.is_staff:
-                cliente = request.user.cliente
-                orden, created = Orden.objects.get_or_create(cliente=cliente, es_aceptada=False)
-                items = orden.ordenitem_set.all()
-                cartItems = orden.get_cart_items
-        except Exception as e:
-            print(e)
-    else:
-        # Non-logged users
-        items = []
-        orden = {"get_cart_total": 0, "get_cart_items": 0}
-        cartItems = orden["get_cart_items"]
+    cart_data = cartData(request)
+    cartItems = cart_data["cartItems"]
+    orden = cart_data["orden"]
+    items = cart_data["items"]
 
     productos = Producto.objects.all()
     monedas = None
 
-    if not "CURRENCY_CODES" in request.session:
+    if not "CURRENCY_CODES" in request.session or len(request.session["CURRENCY_CODES"]) == 0:
         monedas = Moneda.objects.all()
 
         tmp_json = serializers.serialize("json", monedas)
@@ -114,7 +105,7 @@ def tienda(request):
 
     if "AMT_CONVERSION" in request.session:
         valor_cambio = float(request.session["AMT_CONVERSION"][request.session["CURRENCY_CODE"]])
-
+    print(monedas)
     data = {
         "productos": productos,
         "cartItems": cartItems,
@@ -128,16 +119,11 @@ def tienda(request):
 def carro(request):
     valor_cambio = 1
 
-    if request.user.is_authenticated:
-        cliente = request.user.cliente
-        orden, created = Orden.objects.get_or_create(cliente=cliente, es_completa=False)
-        items = orden.ordenitem_set.all()
-        cartItems = orden.get_cart_items
-    else:
-        # cart for non-logged users
-        items = []
-        orden = {"get_cart_total": 0, "get_cart_items": 0}
-        cartItems = orden["get_cart_items"]
+    cart_data = cartData(request)
+
+    cartItems = cart_data["cartItems"]
+    orden = cart_data["orden"]
+    items = cart_data["items"]
 
     if "AMT_CONVERSION" in request.session:
         valor_cambio = float(request.session["AMT_CONVERSION"][request.session["CURRENCY_CODE"]])
@@ -155,16 +141,11 @@ def carro(request):
 def checkout(request):
     valor_cambio = 1
 
-    if request.user.is_authenticated:
-        cliente = request.user.cliente
-        orden, created = Orden.objects.get_or_create(cliente=cliente, es_completa=False)
-        items = orden.ordenitem_set.all()
-        cartItems = orden.get_cart_items
-    else:
-        # Empty cart for non-logged users
-        items = []
-        orden = {"get_cart_total": 0, "get_cart_items": 0}
-        cartItems = orden["get_cart_items"]
+    cart_data = cartData(request)
+
+    cartItems = cart_data["cartItems"]
+    orden = cart_data["orden"]
+    items = cart_data["items"]
 
     tiendas = Tienda.objects.all()
 
@@ -216,7 +197,6 @@ def transferencia(request):
         cartItems = orden["get_cart_items"]
 
     if request.method == "POST":
-        print("entro")
         messages.success(request, "Orden de compra registrada, recuerde enviar la evidencia al correo dado")
         return redirect("tienda")
 
@@ -464,42 +444,60 @@ def detalle_producto(request, id):
     return render(request, "store/detalle_producto.html", data)
 
 
+@csrf_exempt
 def procesar_orden(request):
 
     transaction_id = datetime.datetime.now().timestamp()
     data = json.loads(request.body)
 
+    print(data["form"])
+
     if request.user.is_authenticated:
 
         cliente = request.user.cliente
         orden, created = Orden.objects.get_or_create(cliente=cliente, es_completa=False)
-        total = int(data["form"]["total"])
-        despacho = data["shipping"]["despacho"]
-
-        if despacho is None:
-            orden.retiro_en_tienda = True
-
-        orden.transaction_id = transaction_id
-
-        # check if total sent by frontend is equal to total in backend
-        if total == int(orden.get_cart_total):
-            orden.es_completa = True
-        orden.save()
-
-        if orden.es_completa == True and orden.retiro_en_tienda == False:
-
-            OrdenDeDespacho.objects.create(
-                cliente=cliente,
-                orden=orden,
-                direccion=data["shipping"]["direccion"],
-                ciudad=data["shipping"]["ciudad"],
-                comuna=data["shipping"]["comuna"],
-                region=data["shipping"]["region"],
-                zipcode=data["shipping"]["zipcode"],
-            )
 
     else:
-        print("User is not logged in")
+        cliente, orden = guestOrden(request, data)
+
+    # fetch cart total from the FrontEnd
+    total = int(data["form"]["total"])
+
+    # Set transaction_id in Orden
+    orden.transaction_id = transaction_id
+
+    # check if total sent by frontend is equal to total in backend
+    if total == int(orden.get_cart_total):
+        # Orden turns completed
+        orden.es_completa = True
+
+    # check if takeaway is needed
+    despacho = data["shipping"]["despacho"]
+    if despacho is None:
+        orden.retiro_en_tienda = True
+
+    orden.save()
+
+    # check Orden paid and Takeaway needed
+    if orden.es_completa == True and orden.retiro_en_tienda == False:
+
+        OrdenDeDespacho.objects.create(
+            cliente=cliente,
+            orden=orden,
+            direccion=data["shipping"]["direccion"],
+            ciudad=data["shipping"]["ciudad"],
+            comuna=data["shipping"]["comuna"],
+            region=data["shipping"]["region"],
+            zipcode=data["shipping"]["zipcode"],
+        )
+
+    # TO-DO:
+    # if orden.es_completa == True and orden.retiro_en_tienda == True:
+    #
+    # Sent email informing store location (Vitacura, Maipu or Providencia)
+    # where Cliente needs to get his products
+
+    # TO-DO: sent email confirmation to Cliente
 
     return JsonResponse("Pago realizado..", safe=False)
 
@@ -575,44 +573,73 @@ def final_webpay(request):
         else:
             tienda = request.COOKIES["tienda"]
 
+        # if request.user.is_authenticated:
+        token = request.POST["token_ws"]
+        resultado = transaction.Transaction.commit(token)
+
+        # cliente = request.user.cliente
+        # orden = Orden.objects.create(cliente=cliente, es_completa=False)
+        # orden = Orden()
+        # total = resultado.amount
+        orden = None
+
+        # PRUEBA
+        print(request.user)
         if request.user.is_authenticated:
-            token = request.POST["token_ws"]
-            resultado = transaction.Transaction.commit(token)
-
             cliente = request.user.cliente
-            # orden = Orden.objects.create(cliente=cliente, es_completa=False)
-            orden = Orden()
-            total = resultado.amount
-
-            if request.COOKIES["isdespacho"] == "0":
-                orden.retiro_en_tienda = True
-
-                tienda = Tienda.objects.get(nombre=tienda)
-                orden.tienda = tienda
-
-            orden.transaction_id = resultado.buy_order
-
-            # check if total sent by frontend is equal to total in backend
-            # if total == int(orden.get_cart_total):
-            orden.es_completa = True
-            orden.save()
-
-            if orden.es_completa == True and orden.retiro_en_tienda == False:
-                # create Orden de Despacho instance
-                OrdenDeDespacho.objects.create(
-                    cliente=cliente,
-                    orden=orden,
-                    direccion=direccion,
-                    ciudad=ciudad,
-                    comuna=comuna,
-                    region=region,
-                    zipcode=codigo_zip,
-                )
+            orden, created = Orden.objects.get_or_create(cliente=cliente, es_completa=False)
 
         else:
-            print("User is not logged in")
+            data = {
+                "form": {
+                    "nombre": request.COOKIES["nombre"],
+                    "apellido": request.COOKIES["apellidos"],
+                    "email": request.COOKIES["email"],
+                    "telefono": request.COOKIES["telefono"],
+                    "tienda": tienda,
+                }
+            }
+            # data = {
+            #     "nombre": request.COOKIES["nombre"],
+            #     "apellidos": request.COOKIES["apellidos"],
+            #     "email": request.COOKIES["email"],
+            #     "telefono": request.COOKIES["telefono"],
+            # }
+            # data["form"]["nombre"] = request.COOKIES["nombre"]
+            # data["form"]["apellidos"] = request.COOKIES["apellidos"]
+            # data["form"]["email"] = request.COOKIES["email"]
+            # data["form"]["telefono"] = request.COOKIES["telefono"]
+            print("entro")
+            cliente, orden = guestOrden(request, data)
+        # PRUEBA
 
-        messages.success(request, "Compra realizada correctamente!")
+        if request.COOKIES["isdespacho"] == "0":
+            orden.retiro_en_tienda = True
+
+            tienda = Tienda.objects.get(nombre=tienda)
+            orden.tienda = tienda
+
+        orden.transaction_id = resultado.buy_order
+
+        orden.es_completa = True
+        orden.save()
+
+        if orden.es_completa == True and orden.retiro_en_tienda == False:
+            # create Orden de Despacho instance
+            OrdenDeDespacho.objects.create(
+                cliente=cliente,
+                orden=orden,
+                direccion=direccion,
+                ciudad=ciudad,
+                comuna=comuna,
+                region=region,
+                zipcode=codigo_zip,
+            )
+
+            # else:
+            #     print("User is not logged in")
+
+            messages.success(request, "Compra realizada correctamente!")
     else:
         print("no entro")
 

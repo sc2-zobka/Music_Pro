@@ -19,7 +19,13 @@
 							<input required class="form-control" type="text" name="nombre" placeholder="Nombre..">
 						</div>
 						<div class="form-field">
+							<input required class="form-control" type="text" name="apellido" placeholder="Apellidos..">
+						</div>
+						<div class="form-field">
 							<input required class="form-control" type="email" name="email" placeholder="Email..">
+						</div>
+						<div class="form-field">
+							<input required class="form-control" type="text" name="telefono" placeholder="Telefono..">
 						</div>
 					</div>
 						<div id="retiro_tienda" style="display: inline">
@@ -80,12 +86,10 @@
 			<div class="box-element hidden d-flex justify-content-around" id="payment-info">
 				
 				<div>
-					{% comment %} <button id="make-payment" class="btn btn-primary rounded btn-lg" onclick="webpay()">Pagar con Transbank</button> {% endcomment %}
 					<button class="btn btn-primary rounded btn-lg" onclick="webpay()">Pagar con Transbank</button>
 				</div>
 				<div>
-					{% comment %} <a class="btn btn-warning rounded btn-lg" href="{% url 'transferencia' %}">Realizar Transferencia</a> {% endcomment %}
-					<a class="btn btn-warning rounded btn-lg" id="make-payment">Realizar Transferencia</a>
+					<a class="btn btn-warning rounded btn-lg" href="{% url 'transferencia' %}">Realizar Transferencia</a>
 				</div>
 			</div>
 			
@@ -162,11 +166,16 @@
 	    	submitFormData()
 	    })
 
+		//
+		// Make Payment button (Transbank button)
+		//
 		function submitFormData(){
 
 			var userFormData = {
 				'nombre' : null,
 				'email' : null,
+				'apellido' : null,
+				'telefono' : null,
 				'tienda' : null,
 				'despacho' : null,
 				'total' : total
@@ -197,12 +206,15 @@
 			if (user == 'AnonymousUser'){
 	    		userFormData.nombre = form.nombre.value
 	    		userFormData.email = form.email.value
+	    		userFormData.telefono = form.telefono.value
+	    		userFormData.apellido = form.apellido.value
 				userFormData.tienda = selectedTienda()
 	    	}
 
-			//Sent data to backend
+			//Sent data to the Backend
 			var url = "/procesar_orden/"
-	    	fetch(url, {
+	    	
+			fetch(url, {
 	    		method:'POST',
 	    		headers:{
 	    			'Content-Type':'applicaiton/json',
@@ -210,20 +222,28 @@
 	    		}, 
 	    		body:JSON.stringify({'form':userFormData, 'shipping':shippingInfo}),
 	    		
-            })
-            .then((response) => response.json())
-			.then((data) => {
-    			Swal.fire({
-				"title": "Gracias!",
-				"text": "Compra Exitosa!",
-				"icon": "success",
-				"confirmButtonText": "Inicio"        
+				})
+				.then((response) => response.json())
+				.then((data) => {
+
+					Swal.fire({
+					"title": "Gracias!",
+					"text": "Compra Exitosa!",
+					"icon": "success",
+					"confirmButtonText": "Inicio"        
 				}).then(okay => {
 					if (okay) {
-						window.location.href = "{% url 'tienda' %}";
-					}
-				});
-			})
+					
+					// For non-logged users
+					// clean Cookie cart after payment it's done
+					cart = {}
+					document.cookie = "cart=" + JSON.stringify(cart) + ";domain=;path=/"
+					
+					// redirect to Home page
+					window.location.href = "{% url 'tienda' %}";
+						}
+					});
+				})
 			
 		}
 	</script>
@@ -255,6 +275,13 @@
 				document.cookie = "isdespacho=0; Path=/; expires=Session";
 				document.cookie = "tienda=" + tiendaNombre + "; Path=/; expires=Session";
 				console.log("Retiro en Tienda");
+			}
+
+			if (user == 'AnonymousUser'){
+				document.cookie = "nombre=" + form.nombre.value + "; Path=/; expires=Session";
+				document.cookie = "apellidos=" + form.apellido.value + "; Path=/; expires=Session";
+				document.cookie = "email=" + form.email.value + "; Path=/; expires=Session";
+				document.cookie = "telefono=" + form.telefono.value + "; Path=/; expires=Session";
 			}
 
 			window.location.href = "{% url 'webpay' orden.get_cart_total %}";
